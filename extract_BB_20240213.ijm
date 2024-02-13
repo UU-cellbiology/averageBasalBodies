@@ -19,8 +19,8 @@ else
 	Dialog.addNumber("SD of the ring (um)",0.23);
 	Dialog.addNumber("Maximum diameter (um)",2.44);
 	Dialog.addNumber("Diameter step (um)",0.1);
-	Dialog.addCheckbox("Show detection? ", false);
-	Dialog.addCheckbox("Show XY shift/diameter plots? ", false);
+	Dialog.addCheckbox("Show detection (in overlay)? ", false);
+	Dialog.addCheckbox("Show diameter vs Z plots? ", false);
 	Dialog.show();
 	nChAlign=Dialog.getNumber();
 	nScale=Dialog.getNumber();
@@ -44,6 +44,7 @@ setForegroundColor(255, 255, 255);
 setBackgroundColor(0, 0, 0);
 
 origID = getImageID();
+origTitle = getTitle();
 bitD = bitDepth();
 if(bitD>16)
 {
@@ -53,7 +54,10 @@ Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 getVoxelSize(pW, pH, pD, unit);
 //getPixelSize(unit, pW, pH);
 nSDpix = nSD/pW; 
-
+if(bShowDetection)
+{
+	run("Remove Overlay");
+}
 //expand the image
 //get only channel we need
 run("Duplicate...", "title=alignChannel duplicate channels="+toString(nChAlign));
@@ -95,10 +99,11 @@ for (nDiameter = nDiamMin; nDiameter<=nDiamMax; nDiameter+=nDiamStep)
 nTotROIS = roiManager("count");
 for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 {
+	nTimeTic = getTime();
 	selectImage(origID);
 	roiManager("Select", nRoiIndex);
 	sRoiName = RoiManager.getName(nRoiIndex);
-	print("working on ROI "+sRoiName);
+	print("working on ROI "+sRoiName +" ("+toString(nRoiIndex+1)+"/"+toString(nTotROIS)+")");
 	Stack.getPosition(nFirstCh,nFirstSlice,nFirstFrame);
 	getSelectionCoordinates(xLine, yLine);
 	run("Clear Results");
@@ -121,6 +126,11 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 		{
 			nCenterX = globX[nCurrSlice-1];
 			nCenterY = globY[nCurrSlice-1];
+		
+			if(bShowDetection)
+			{
+				addOverlay(origID,nCurrSlice,globDiam,pW,nCenterX,nCenterY);
+			}
 			nCurrSlice--;
 		}
 		else 
@@ -141,6 +151,10 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 			{
 				nCenterX = globX[nCurrSlice-1];
 				nCenterY = globY[nCurrSlice-1];
+				if(bShowDetection)
+				{
+					addOverlay(origID,nCurrSlice,globDiam,pW,nCenterX,nCenterY);
+				}
 				nCurrSlice++;	
 			}
 			else 
@@ -166,6 +180,8 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 		setResult("finY", i-nBeginSlice, globY[i-1]);
 		setResult("finZ", i-nBeginSlice, i);
 	}
+	//saving results
+	saveAs("Results",  filesAlignedDir+sRoiName+"_scaledx"+toString(nScale)+".csv");
 	print("exporting aligned stack");
 	for(nCh=1; nCh<=channels; nCh++)
 	{
@@ -191,12 +207,48 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 	
 	saveAs("Tiff", filesAlignedDir+sRoiName+"_scaledx"+toString(nScale)+"_aligned.tif");
 	close();
+	nTimeToc = getTime();
+	print("time per ROI: "+toString((nTimeToc-nTimeTic)/1000)+" s");
+	if(bShowPlots)
+	{
+		showDiameterPlot(nBeginSlice, nEndSlice);
+	}
+
 }
 selectImage(templateID);
 close();
 selectImage(origExpID);
 close();
 print("all ROIs done.");
+
+function addOverlay(origID,nCurrSlice,globDiam,pW,nCenterX,nCenterY)
+{
+	selectImage(origID);
+	Stack.setSlice(nCurrSlice);
+	
+	diamPx = globDiam[nCurrSlice-1]/pW;
+	
+	//Overlay.drawEllipse(nCenterX+1-0.5*diamPx, nCenterY+1-0.5*diamPx, diamPx, diamPx);
+	makeOval(nCenterX+1-0.5*diamPx, nCenterY+1-0.5*diamPx, diamPx, diamPx);
+	Roi.setStrokeWidth(2);
+	run("Add Selection...");
+}
+
+
+function showDiameterPlot(nBeginSlice, nEndSlice)
+{
+	nLen= nEndSlice-nBeginSlice+1;
+	slicesNArr = newArray(nLen);
+	finDiam = newArray(nLen);
+	for (nSl = nBeginSlice; nSl <= nEndSlice; nSl++) 
+	{
+		slicesNArr[nSl-nBeginSlice]=nSl;
+		finDiam[nSl-nBeginSlice]=globDiam[nSl-1];
+	}
+	Plot.create("diameter", "slice position", unit, slicesNArr, finDiam);
+	Plot.setLimits(nBeginSlice, nEndSlice, 0, nDiamMax)
+	Plot.show();
+}
 
 function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice, nCenterX, nCenterY)
 {
@@ -220,14 +272,14 @@ function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice, nCenterX, 
 	}
 	ccID = getImageID();
 
-	updateCCMAX(globCCMax,globX,globY,globDiam,nCurrSlice);
+	updateCCMAX(globCCMax,globX,globY,globDiam,nCurrSlice,ccID);
 	//print(globCCMax[nCurrSlice]);
 	//print(globX[nCurrSlice]);
 	//print(globY[nCurrSlice]);
 	//print(globDiam[nCurrSlice]);
 	nShiftOk = 1;
 	disp = sqrt(globX[nCurrSlice-1]*globX[nCurrSlice-1]+globY[nCurrSlice-1]*globY[nCurrSlice-1]);
-	if(disp>tempSize/3.0)
+	if(disp>tempSize/4.0)
 	{
 		nShiftOk=0;
 	}
@@ -246,9 +298,10 @@ function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice, nCenterX, 
 	}
 
 }
-function updateCCMAX(globCCMax,globX,globY,globDiam, nCurrSlice)
+function updateCCMAX(globCCMax,globX,globY,globDiam, nCurrSlice,ccID)
 {
 	selectImage(ccID);
+	selectWindow("xcorr_vs_frame1_circletemplate");
 	//setSlice(1);
 	//get CC max	
 	globCCMax[nCurrSlice-1] = -100.0;
