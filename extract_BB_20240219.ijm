@@ -16,7 +16,7 @@ else
 	Dialog.create("Align parameters:");
 	Dialog.addNumber("Channel for alignment ",4);
 	Dialog.addNumber("Scale factor (1=no scale) ",1);
-	Dialog.addNumber("SD of the ring (um)",0.23);
+	Dialog.addNumber("SD of the ring (um)",0.18);
 	Dialog.addNumber("Maximum diameter (um)",2.44);
 	Dialog.addNumber("Diameter step (um)",0.1);
 	Dialog.addCheckbox("Show detection (in overlay)? ", false);
@@ -32,6 +32,7 @@ else
 	bShowPlots=Dialog.getCheckbox();
 
 }
+
 nDiamMin =2*nSD;
 filesDir = getDir("Choose a folder to save output...");
 print("\\Clear");
@@ -54,12 +55,14 @@ Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 getVoxelSize(pW, pH, pD, unit);
 //getPixelSize(unit, pW, pH);
 nSDpix = nSD/pW; 
+nShiftThreshold=nSDpix*2;
 if(bShowDetection)
 {
 	run("Remove Overlay");
 }
 //expand the image
 //get only channel we need
+run("Select All");
 run("Duplicate...", "title=alignChannel duplicate channels="+toString(nChAlign));
 pixExp = Math.round(0.5*(nDiamMax+6*nSD)/pW)+4;
 run("Canvas Size...", "width="+toString(widthOrig+2*pixExp)+" height="+toString(heightOrig+2*pixExp)+" position=Center zero");
@@ -183,6 +186,7 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 	//saving results
 	saveAs("Results",  filesAlignedDir+sRoiName+"_scaledx"+toString(nScale)+".csv");
 	print("exporting aligned stack");
+	
 	for(nCh=1; nCh<=channels; nCh++)
 	{
 		selectImage(outputID);
@@ -193,7 +197,14 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 		{
 			selectImage(origID);
 			Stack.setSlice(nSl);
+			if(nCh==nChAlign && bShowDetection)
+			{
+				diamPx = globDiam[nSl-1]/pW;
+				makeOval(globX[nSl-1]+1-0.5*diamPx, globY[nSl-1]+1-0.5*diamPx, diamPx, diamPx);
+				run("Add Selection...");
+			}
 			makeRectangle(globX[nSl-1]-nOutputHalfSize, globY[nSl-1]-nOutputHalfSize, nOutputHalfSize*2+1, nOutputHalfSize*2+1);
+
 			//roiManager("Add");	
 			run("Copy");
 			selectImage(outputID);
@@ -201,6 +212,7 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 			run("Select All");
 		    run("Paste");
 		}
+	
 	}
 	//rotate stack
 	run("Rotate... ", "angle="+toString(dRotAngle)+" grid=1 interpolation=Bicubic fill enlarge");
@@ -223,15 +235,15 @@ print("all ROIs done.");
 
 function addOverlay(origID,nCurrSlice,globDiam,pW,nCenterX,nCenterY)
 {
-	selectImage(origID);
-	Stack.setSlice(nCurrSlice);
-	
-	diamPx = globDiam[nCurrSlice-1]/pW;
-	
-	//Overlay.drawEllipse(nCenterX+1-0.5*diamPx, nCenterY+1-0.5*diamPx, diamPx, diamPx);
-	makeOval(nCenterX+1-0.5*diamPx, nCenterY+1-0.5*diamPx, diamPx, diamPx);
-	Roi.setStrokeWidth(2);
-	run("Add Selection...");
+//	selectImage(origID);
+//	Stack.setSlice(nCurrSlice);
+//	
+//	diamPx = globDiam[nCurrSlice-1]/pW;
+//	
+//	//Overlay.drawEllipse(nCenterX+1-0.5*diamPx, nCenterY+1-0.5*diamPx, diamPx, diamPx);
+//	makeOval(nCenterX+1-0.5*diamPx, nCenterY+1-0.5*diamPx, diamPx, diamPx);
+//	Roi.setStrokeWidth(2);
+//	run("Add Selection...");
 }
 
 
@@ -278,10 +290,17 @@ function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice, nCenterX, 
 	//print(globY[nCurrSlice]);
 	//print(globDiam[nCurrSlice]);
 	nShiftOk = 1;
-	disp = sqrt(globX[nCurrSlice-1]*globX[nCurrSlice-1]+globY[nCurrSlice-1]*globY[nCurrSlice-1]);
-	if(disp>tempSize/4.0)
+	if(globCCMax[nCurrSlice-1]<0 || globCCMax[nCurrSlice-1]>1.0)
 	{
-		nShiftOk=0;
+		nShiftOk = 0;
+	}
+	else 
+	{
+		disp = sqrt(globX[nCurrSlice-1]*globX[nCurrSlice-1]+globY[nCurrSlice-1]*globY[nCurrSlice-1]);
+		if(disp>nShiftThreshold)
+		{
+			nShiftOk = 0;
+		}
 	}
 	if(nShiftOk == 1)
 	{
