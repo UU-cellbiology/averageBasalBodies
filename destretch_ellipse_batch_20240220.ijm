@@ -69,7 +69,7 @@ for (nFile = 0; nFile < list.length; nFile++)
 print("All done");
 selectWindow("Log");
 
-saveAs("Text", filesDir+"Log_batch_run.txt");
+saveAs("Text", filesDir+getTimeStamp_sec()+"_log_destretch_batch_run.txt");
 	
 function saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, noExtFilename)
 {
@@ -96,4 +96,13 @@ function saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, noExtFilen
 		saveAs("Tiff", filesAlignedXZDir+"MAX_XZ_"+noExtFilename+"_aligned_destretched.tif");
 		close();
 		selectImage(finID);
+}
+function getTimeStamp_sec() 
+{ 
+	// returns timestamp: yearmonthdayhourminutesecond
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+	
+	TimeStamp = toString(year)+IJ.pad(month,2)+IJ.pad(dayOfMonth,2);
+	TimeStamp = TimeStamp+IJ.pad(hour,2)+IJ.pad(minute,2)+IJ.pad(second,2);
+	return TimeStamp;
 }

@@ -256,6 +256,9 @@ close();
 selectImage(origExpID);
 close();
 print("all ROIs done.");
+selectWindow("Log");
+
+saveAs("Text", filesDir+getTimeStamp_sec()+"_log_extract_BB_batch_run.txt");
 
 function saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName, nScale)
 {
@@ -396,4 +399,14 @@ function updateCCMAX(globCCMax,globX,globY,globDiam, nCurrSlice,ccID)
 	    
 	}
 	close();
+}
+
+function getTimeStamp_sec() 
+{ 
+	// returns timestamp: yearmonthdayhourminutesecond
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+	
+	TimeStamp = toString(year)+IJ.pad(month,2)+IJ.pad(dayOfMonth,2);
+	TimeStamp = TimeStamp+IJ.pad(hour,2)+IJ.pad(minute,2)+IJ.pad(second,2);
+	return TimeStamp;
 }

@@ -163,6 +163,7 @@ run("Rotate... ", "angle="+toString((-1)*nBackRotAngle)+" grid=1 interpolation=B
 run("Canvas Size...", "width="+toString(width)+" height="+toString(height)+" position=Center zero");
 rename(origTitle+"_destretch");
 setVoxelSize(pW, pH, depth, unit);
+run("Select All");
 selectImage(tempID);
 close();
 
