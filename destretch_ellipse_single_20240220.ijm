@@ -151,11 +151,11 @@ run("Scale...", "x="+toString(nScaleX)+" y="+toString(nScaleY)+" z=1.0 interpola
 //let's take a vector (0,1)
 xnew = (-1)*sin(nMaxAngle*PI/180);
 ynew = cos(nMaxAngle*PI/180);
-print(180*Math.atan2(ynew, xnew)/PI-90);
+//print(180*Math.atan2(ynew, xnew)/PI-90);
 xnew*=nScaleX;
 ynew*=nScaleY;
 nBackRotAngle = 180*Math.atan2(ynew, xnew)/PI-90;
-print(nBackRotAngle);
+//print(nBackRotAngle);
 
 //run("Rotate... ", "angle="+toString((-1)*nMaxAngle)+" grid=1 interpolation=Bicubic enlarge stack");
 run("Rotate... ", "angle="+toString((-1)*nBackRotAngle)+" grid=1 interpolation=Bicubic enlarge stack");

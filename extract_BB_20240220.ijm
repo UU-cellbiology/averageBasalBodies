@@ -1,4 +1,10 @@
-//called from another macro
+// Cell Biology, Neurobiology and Biophysics Department of Utrecht University.
+// email y.katrukha@uu.nl
+// this macro requires the following plugin to be installed
+// https://github.com/UU-cellbiology/Correlescence/releases/tag/v0.0.6
+
+
+//in case it is called from another macro
 values = getArgument();
 if(values.length()>0)
 {
@@ -8,6 +14,11 @@ if(values.length()>0)
 	nSD=parseFloat(params[2]);
 	nDiamMax=parseFloat(params[3]);
 	nDiamStep=parseFloat(params[4]);
+	bGenXYXZ = true;
+	if(parseFloat(params[5])==0)
+	{
+		bGenXYXZ=false;
+	}
 	bShowDetection=false;
 	bShowPlots = false;
 }
@@ -19,6 +30,7 @@ else
 	Dialog.addNumber("SD of the ring (um)",0.18);
 	Dialog.addNumber("Maximum diameter (um)",2.44);
 	Dialog.addNumber("Diameter step (um)",0.1);
+	Dialog.addCheckbox("Generate XY/XZ max proj?", true);
 	Dialog.addCheckbox("Show detection (in overlay)? ", false);
 	Dialog.addCheckbox("Show diameter vs Z plots? ", false);
 	Dialog.show();
@@ -27,7 +39,7 @@ else
 	nSD=Dialog.getNumber();
 	nDiamMax=Dialog.getNumber();
 	nDiamStep=Dialog.getNumber();
-	
+	bGenXYXZ=Dialog.getCheckbox();
 	bShowDetection=Dialog.getCheckbox();
 	bShowPlots=Dialog.getCheckbox();
 
@@ -38,6 +50,14 @@ filesDir = getDir("Choose a folder to save output...");
 print("\\Clear");
 filesAlignedDir = filesDir+"aligned/";
 File.makeDirectory(filesAlignedDir);
+if(bGenXYXZ)
+{
+	filesAlignedXYDir = filesAlignedDir+"alignedXY/";
+    File.makeDirectory(filesAlignedXYDir);
+    filesAlignedXZDir = filesAlignedDir+"alignedXZ/";
+    File.makeDirectory(filesAlignedXZDir);
+
+}
 
 //preparations
 run("Set Measurements...", "min redirect=None decimal=5");
@@ -218,6 +238,10 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 	run("Rotate... ", "angle="+toString(dRotAngle)+" grid=1 interpolation=Bicubic fill enlarge");
 	
 	saveAs("Tiff", filesAlignedDir+sRoiName+"_scaledx"+toString(nScale)+"_aligned.tif");
+	if(bGenXYXZ)
+	{
+		saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName, nScale);
+	}
 	close();
 	nTimeToc = getTime();
 	print("time per ROI: "+toString((nTimeToc-nTimeTic)/1000)+" s");
@@ -232,6 +256,32 @@ close();
 selectImage(origExpID);
 close();
 print("all ROIs done.");
+
+function saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName, nScale)
+{
+		finID=getImageID();
+		run("Z Project...", "projection=[Max Intensity]");
+		run("Make Composite");
+		Stack.setChannel(nChAlign);
+		resetMinAndMax();
+		saveAs("Tiff", filesAlignedXYDir+"MAX_XY_"+sRoiName+"_scaledx"+toString(nScale)+"_aligned.tif");
+		close();
+		selectImage(finID);
+		run("Select All");
+		run("Reslice [/]...", "output="+toString(pD)+" start=Top");
+		tempRS=getImageID();
+		run("Z Project...", "projection=[Max Intensity]");
+		projXZ=getImageID();
+		selectImage(tempRS);
+		close();
+		selectImage(projXZ);
+		run("Make Composite");
+		Stack.setChannel(nChAlign);
+		resetMinAndMax();
+		saveAs("Tiff", filesAlignedXZDir+"MAX_XZ_"+sRoiName+"_scaledx"+toString(nScale)+"_aligned.tif");
+		close();
+		selectImage(finID);
+}
 
 function addOverlay(origID,nCurrSlice,globDiam,pW,nCenterX,nCenterY)
 {
