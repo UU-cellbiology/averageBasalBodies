@@ -93,17 +93,10 @@ origExpID = getImageID();
 
 //size of the template in XY
 tempSize = (nDiamMax+6*nSD)/pW;
-
-nTemplateSlN = makeTemplateCircles(bitD, tempSize, tempSize, nSD,nDiamMin, nDiamMax, pW);
+nCenterShift = Math.round(0.5*tempSize);
+nDiamTable = makeTemplateCircles(bitD, tempSize, tempSize, nSD,nDiamMin, nDiamMax, pW);
 templateID = getImageID();
-nTempSlice = 0;
-nDiamTable = newArray(nTemplateSlN-1);
-for (nDiameter = nDiamMin; nDiameter<=nDiamMax; nDiameter+=nDiamStep) 
-{
-	nDiamTable[0]=nDiameter;
-	nTempSlice++;
-}
-
+nTemplateSlN = nDiamTable.length+1;
 
 
 nTotROIS = roiManager("count");
@@ -273,19 +266,6 @@ function saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName, 
 		selectImage(finID);
 }
 
-function addOverlay(origID,nCurrSlice,globDiam,pW,nCenterX,nCenterY)
-{
-//	selectImage(origID);
-//	Stack.setSlice(nCurrSlice);
-//	
-//	diamPx = globDiam[nCurrSlice-1]/pW;
-//	
-//	//Overlay.drawEllipse(nCenterX+1-0.5*diamPx, nCenterY+1-0.5*diamPx, diamPx, diamPx);
-//	makeOval(nCenterX+1-0.5*diamPx, nCenterY+1-0.5*diamPx, diamPx, diamPx);
-//	Roi.setStrokeWidth(2);
-//	run("Add Selection...");
-}
-
 
 function showDiameterPlot(nBeginSlice, nEndSlice)
 {
@@ -399,6 +379,7 @@ function makeTemplateCircles(bitD, tempW, tempH, nSD,nDiamMin, nDiamMax, pW)
 	}
 	newImage("circletemplate", toString(bitD)+"-bit black", tempW, tempH, nTemplateSlN);
 	templateID = getImageID();
+	nDiamTable = newArray(nTemplateSlN-1);
 	nTempSlice = 2;
 	nCenterShiftX = Math.round(0.5*tempW);
 	nCenterShiftY = Math.round(0.5*tempH);
@@ -417,9 +398,10 @@ function makeTemplateCircles(bitD, tempW, tempH, nSD,nDiamMin, nDiamMax, pW)
 		run("Select All");
 		//blur
 		run("Gaussian Blur...", "sigma="+toString(nSDpix));
+		nDiamTable[nTempSlice-2]=nDiameter;
 		nTempSlice++;
 	}
-	return nTemplateSlN;
+	return nDiamTable;
 }
 
 function getTimeStamp_sec() 
