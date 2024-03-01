@@ -1,5 +1,8 @@
 //called from another macro
 values = getArgument();
+
+
+Stack.getDimensions(width, height, channels, slices, frames);
 if(values.length()>0)
 {
 	params = split(values, "");
@@ -16,13 +19,13 @@ if(values.length()>0)
 }
 else
 {
-	Dialog.create("Rotation find parameters:");
-	Dialog.addNumber("Channel for alignment ",4);
+	Dialog.create("Find BB orientation parameters:");
+	Dialog.addNumber("Reference channel",channels);
 	Dialog.addNumber("SD of the ring (um)",0.18);
 	Dialog.addNumber("Maximum diameter (um)",2.44);
 	Dialog.addNumber("Diameter step (um)",0.1);
 	Dialog.addCheckbox("Get diameter from results? ", false);
-	Dialog.addCheckbox("Show detection (in overlay)? ", false);
+	Dialog.addCheckbox("Show detection? ", false);
 	Dialog.show();
 	nChAlign=Dialog.getNumber();
 	nSD=Dialog.getNumber();
@@ -71,6 +74,7 @@ if(bDiamResults)
    			circlDiam = nCurDiam;
    		}
 	}
+	//make sure we do not detect diameter again
 	if(circlDiam>0)
 	{
 		nDiamMin=circlDiam;
@@ -158,7 +162,24 @@ print("final angle " +rotAngle);
 selectImage(ccID);
 close();
 selectImage(templateID);
-setSlice(maxInd+2);
+if(bShowDetection)
+{
+	setSlice(maxInd+2);
+	run("Enhance Contrast", "saturated=0.35");
+	run("Duplicate...", "title=detectedSlice");
+	selectImage(maxPrID);
+	run("Merge Channels...", "c1=["+getTitle()+"] c2=detectedSlice create ignore");
+	selectImage(templateID);
+	rename("MAX_"+origTitle+"_detected");
+}
+else {
+	selectImage(maxPrID);
+	close();
+	selectImage(templateID);
+}
+close();
+selectImage(origID);
+run("Rotate... ", "angle="+toString((-1)*rotAngle)+" grid=1 interpolation=Bicubic fill enlarge stack");
 run("Enhance Contrast", "saturated=0.35");
 
 function makeTemplateCircles(bitD, tempW, tempH, nSD,nDiamMin, nDiamMax, pW)
