@@ -38,7 +38,7 @@ else
 nDiamMin =2*nSD;
 
 //preparations
-run("Set Measurements...", "min redirect=None decimal=5");
+run("Set Measurements...", "mean min redirect=None decimal=5");
 setForegroundColor(255, 255, 255);
 setBackgroundColor(0, 0, 0);
 run("Select All");
@@ -112,7 +112,7 @@ for (i = 0; i < nTemplateSlN-1; i++)
 		circlX = currShiftX;
 		circlY = currShiftY;
 		circlDiam = nDiamTable[i];
-		print(circlDiam);
+		//print("Detected diameter = " + toString(circlDiam));
 		
 	}
 }
@@ -126,59 +126,76 @@ selectImage(templateID);
 close();
 
 
-nAngleTable = makeTemplateBB(bitD, width, height, circlX, circlY, nSD, circlDiam, 2, pW);
-nAngleTotSlN = nAngleTable.length;
-templateID = getImageID();
 selectImage(maxPrID);
-run("Select All");
-run("Copy");
-selectImage(templateID);
-setSlice(1);
-run("Paste");
-run("2D cross-correlation", "calculate=[current image in stack and all others] for=1 calculation=[FFT cross-correlation (fast)] max=0 max_0=0");
-ccID = getImageID();
-cccX = 0;
-cccY = 0;
-toUnscaled(cccX, cccY);
-makeRectangle(cccX, cccY, 1, 1);
+run("Duplicate...", "duplicate channels="+toString(nChAlign));
+singleCHID=getImageID();
+//setAutoThreshold("Default dark");
+run("Unsharp Mask...", "radius=10 mask=0.60");
+setAutoThreshold("Huang dark");
 
-run("Plot Z-axis Profile");
-Plot.getValues(xpoints, anglCC);
+run("Analyze Particles...", "size=1-Infinity show=Masks exclude");
+maskID=getImageID();
+rename("mask");
+selectImage(singleCHID);
 close();
-maxAnglCC = -10000;
+selectImage(maskID);
+dRadiusIn =  Math.round(0.5*circlDiam/pW)+2.0*nSDpix;
+dRadiusOut = 1.5*circlDiam/pW;
+dIntArr = newArray(360);
+dAngleArr= newArray(360);
+nLineWidth = 6;
+run("Clear Results");
+//roiManager("reset")
+for(dAngle =0; dAngle<360;dAngle++)
+{
+	dAngleArr[dAngle]=dAngle;
+	dAngleRad = dAngle*PI/180;
+	
+	x2=dRadiusOut*sin(dAngleRad);
+	y2=(-1)*dRadiusOut*cos(dAngleRad);
+	
+	x1=dRadiusIn*sin(dAngleRad);
+	y1=(-1)*dRadiusIn*cos(dAngleRad);
+	
+	makeLine(circlX+x1, circlY+y1, circlX + x2, circlY + y2,nLineWidth);
+	//roiManager("Add");
+	run("Measure");
+	dIntArr[dAngle]=getResult("Mean", dAngle);
+	
+}
+
+//Plot.create("Title", "angle (degrees)", "Intensity", dAngleArr, dIntArr);
+//Plot.show();
+maxInt = -1000;
 rotAngle = 0;
-maxInd = 0;
-for (i = 1; i < anglCC.length; i++) 
+for(dAngle =0; dAngle<360;dAngle++)
 {
- 	if(anglCC[i]>maxAnglCC)
- 	{
- 		maxAnglCC = anglCC[i];
- 		maxInd = i-1;
- 		rotAngle = nAngleTable[i-1];
- 	}
+	if(dIntArr[dAngle]>maxInt)
+	{
+		rotAngle=dAngle;
+		maxInt=dIntArr[dAngle];
+	}
 }
-rotAngle = nAngleTable[maxInd];
-print("final angle " +rotAngle);
-selectImage(ccID);
-close();
-selectImage(templateID);
-if(bShowDetection)
-{
-	setSlice(maxInd+2);
-	run("Enhance Contrast", "saturated=0.35");
-	run("Duplicate...", "title=detectedSlice");
-	selectImage(maxPrID);
-	run("Merge Channels...", "c1=["+getTitle()+"] c2=detectedSlice create ignore");
-	selectImage(templateID);
-	rename("MAX_"+origTitle+"_detected");
-}
-else {
-	selectImage(maxPrID);
-	close();
-	selectImage(templateID);
-}
+print("Angle="+toString(rotAngle));
+
+selectImage(maxPrID);
 close();
 selectImage(origID);
+//adjust canvas so that rotation center is in the middle
+pxLeft = circlX;
+pxRight = width-circlX-1;
+maxW = maxOf(pxLeft, pxRight);
+
+pxTop = circlY;
+pxBottom = height-circlY-1;
+maxH = maxOf(pxTop, pxBottom);
+
+//expand right
+run("Canvas Size...", "width="+toString(circlX+maxW+1)+" height="+toString(circlY+maxH+1)+" position=Top-Left zero");
+Stack.getDimensions(width, height, channels, slices, frames);
+//expand left
+run("Canvas Size...", "width="+toString(width+(maxW-pxLeft))+" height="+toString(height+(maxH-pxTop))+" position=Bottom-Right zero");
+
 run("Rotate... ", "angle="+toString((-1)*rotAngle)+" grid=1 interpolation=Bicubic fill enlarge stack");
 run("Enhance Contrast", "saturated=0.35");
 
@@ -270,7 +287,7 @@ function makeTemplateBB(bitD, tempW, tempH, nCenterShiftX, nCenterShiftY, nSD, n
 			newX1 = -nRadBB*sin(nAngle*PI/180);
 			newY1 = nRadBB*cos(nAngle*PI/180);
 			
-			nRadOut = Math.round(0.5*nDiam/pW)+1.5*nSDpix+nDiam*0.3/pW;
+			nRadOut = Math.round(0.5*nDiam/pW)+1.5*nSDpix+nDiam*0.5/pW;
 			nRadOut *=-1;
 			newX2 = (-1)*nRadOut*sin(nAngle*PI/180);
 			newY2 = nRadOut*cos(nAngle*PI/180);

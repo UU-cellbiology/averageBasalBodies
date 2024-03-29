@@ -8,8 +8,8 @@ bZSliceZero = 1;
 %output ROI width (in pixels)
 nOutThickness = 105;
 
-%dirname = uigetdir ();
-dirname = '/home/eugene/workspace/extractBasalBodies/20240219_new_data/aligned';
+dirname = uigetdir ();
+%dirname = '/home/eugene/workspace/extractBasalBodies/20240219_new_data/aligned';
 files = glob(strcat(dirname,'/*.csv'));
 mkdir(dirname,'BT_rois');
 file_out = fopen(strcat(dirname,'/BT_rois/Output_btrois.csv'), 'w');
