@@ -12,7 +12,7 @@ dirname = uigetdir ();
 %dirname = '/home/eugene/workspace/extractBasalBodies/20240219_new_data/aligned';
 files = glob(strcat(dirname,'/*.csv'));
 mkdir(dirname,'BT_rois');
-file_out = fopen(strcat(dirname,'/BT_rois/Output_btrois.csv'), 'w');
+file_out = fopen(strcat(dirname,'/BT_rois/BB_ROIs_btrois.csv'), 'w');
 fprintf(file_out,'BigTrace_groups,version,0.3.0\n');
 fprintf(file_out,'GroupsNumber,1\nBT_Group,1\nName,*undefined*\n');
 fprintf(file_out,'PointSize,4\nPointColor,0,255,0,255\n');

@@ -3,7 +3,7 @@
 // this macro requires the following plugin to be installed
 // https://github.com/UU-cellbiology/Correlescence/releases/tag/v0.0.7
 
-nVersion="20230326";
+nVersion = "20240429";
 
 Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 
@@ -54,8 +54,13 @@ print("Detection channel: "+toString(nChAlign));
 print("SD of the ring (um): "+toString(nSD));
 print("Maximum diameter (um): "+toString(nDiamMax));
 print("Diameter step (um): "+toString(nDiamStep));
-filesAlignedDir = filesDir+"detected/";
+filesAlignedDir = filesDir+"s1_detected/";
 File.makeDirectory(filesAlignedDir);
+logDir = filesDir+"logs/";
+File.makeDirectory(logDir);
+
+sTimeStamp = getTimeStamp_sec();
+
 if(bGenXYXZ)
 {
 	filesAlignedXYDir = filesAlignedDir+"detectedXY/";
@@ -109,6 +114,7 @@ nTemplateSlN = nDiamTable.length+1;
 
 
 nTotROIS = roiManager("count");
+nRoiLocated = 0;
 for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 {
 	nTimeTic = getTime();
@@ -128,24 +134,28 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 	globY = newArray(slices);
 	globDiam  = newArray(slices);
 	globCCMax = newArray(slices);
-	nBeginSlice=1;
+	nBeginSlice = 1;
+	bFoundSpan = true;
 	while(nCurrSlice>0)
 	{
 		if(findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice,nCenterX, nCenterY)>0)
 		{
 			nCenterX = globX[nCurrSlice-1];
 			nCenterY = globY[nCurrSlice-1];
-
 			nCurrSlice--;
 		}
 		else 
 		{
+			if(nCurrSlice == nFirstSlice)
+			{
+				bFoundSpan = false;
+			}
 			nBeginSlice = nCurrSlice+1;
 			nCurrSlice = -1;
 		}
 	}
 	nEndSlice = slices;
-	if(nFirstSlice!=slices)
+	if(nFirstSlice!=slices && bFoundSpan)
 	{
 		nCurrSlice = nFirstSlice+1;
 	    nCenterX = nCenterXini;
@@ -167,80 +177,88 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 	
 		}
 	}
-	print("found z-range "+nBeginSlice+" to "+nEndSlice);
-
-	run("Clear Results");	
-	for(i=nBeginSlice;i<=nEndSlice;i++)
+	if(bFoundSpan)
 	{
-		setResult("finCCMax", i-nBeginSlice, globCCMax[i-1]);
-		setResult("finDiam", i-nBeginSlice, globDiam[i-1]);
-		setResult("finX", i-nBeginSlice, globX[i-1]);
-		setResult("finY", i-nBeginSlice, globY[i-1]);
-		setResult("finZ", i-nBeginSlice, i);
-	}
-	//saving results
-	saveAs("Results",  filesAlignedDir+sRoiName+".csv");
+		nRoiLocated++;
+		print("found z-range "+nBeginSlice+" to "+nEndSlice);
 	
-	
-	
-	if(bExtractStack || bGenXYXZ)
-	{
-		
-		//found coordinates, let's extract image data
-		nOutputHalfSize = Math.round(0.5*((1.5*nDiamMax+6*nSD)/pW));
-		newImage("HyperStack", toString(bitD)+"-bit composite-mode", nOutputHalfSize*2+1, nOutputHalfSize*2+1, channels, nEndSlice-nBeginSlice+1, frames);
-		setVoxelSize(pW, pH, pD, unit);
-		outputID = getImageID();
-		for(nCh=1; nCh<=channels; nCh++)
+		run("Clear Results");	
+		for(i=nBeginSlice;i<=nEndSlice;i++)
 		{
-			selectImage(outputID);
-			Stack.setChannel(nCh);
+			setResult("finCCMax", i-nBeginSlice, globCCMax[i-1]);
+			setResult("finDiam", i-nBeginSlice, globDiam[i-1]);
+			setResult("finX", i-nBeginSlice, globX[i-1]);
+			setResult("finY", i-nBeginSlice, globY[i-1]);
+			setResult("finZ", i-nBeginSlice, i);
+		}
+		//saving results
+		saveAs("Results",  filesAlignedDir+sRoiName+".csv");
+		
+		
+		
+		if(bExtractStack || bGenXYXZ)
+		{
+			
+			//found coordinates, let's extract image data
+			nOutputHalfSize = Math.round(0.5*((1.5*nDiamMax+6*nSD)/pW));
+			newImage("HyperStack", toString(bitD)+"-bit composite-mode", nOutputHalfSize*2+1, nOutputHalfSize*2+1, channels, nEndSlice-nBeginSlice+1, frames);
+			setVoxelSize(pW, pH, pD, unit);
+			outputID = getImageID();
+			for(nCh=1; nCh<=channels; nCh++)
+			{
+				selectImage(outputID);
+				Stack.setChannel(nCh);
+				selectImage(origID);
+				Stack.setChannel(nCh);
+				for(nSl=nBeginSlice;nSl<=nEndSlice;nSl++)
+				{
+					selectImage(origID);
+					Stack.setSlice(nSl);
+					makeRectangle(globX[nSl-1]-nOutputHalfSize, globY[nSl-1]-nOutputHalfSize, nOutputHalfSize*2+1, nOutputHalfSize*2+1);	
+					run("Copy");
+					selectImage(outputID);
+					Stack.setSlice(nSl-nBeginSlice+1);
+					run("Select All");
+				    run("Paste");
+				}
+			
+			}
+			if(bExtractStack)
+			{
+				print("exporting detected stack");
+				saveAs("Tiff", filesAlignedDir+sRoiName+".tif");
+			}
+			if(bGenXYXZ)
+			{
+				print("generating XY XZ projections");
+				saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName);
+			}
+			close();
+			
+	
+		}
+		if(bShowDetection)
+		{
+			print("adding detection to the overlay");
 			selectImage(origID);
-			Stack.setChannel(nCh);
+			Stack.setChannel(nChAlign);
 			for(nSl=nBeginSlice;nSl<=nEndSlice;nSl++)
 			{
-				selectImage(origID);
 				Stack.setSlice(nSl);
-				makeRectangle(globX[nSl-1]-nOutputHalfSize, globY[nSl-1]-nOutputHalfSize, nOutputHalfSize*2+1, nOutputHalfSize*2+1);	
-				run("Copy");
-				selectImage(outputID);
-				Stack.setSlice(nSl-nBeginSlice+1);
-				run("Select All");
-			    run("Paste");
+				diamPx = globDiam[nSl-1]/pW;
+				makeOval(globX[nSl-1]+1-0.5*diamPx, globY[nSl-1]+1-0.5*diamPx, diamPx, diamPx);
+				run("Add Selection...");
 			}
-		
 		}
-		if(bExtractStack)
-		{
-			print("exporting detected stack");
-			saveAs("Tiff", filesAlignedDir+sRoiName+".tif");
-		}
-		if(bGenXYXZ)
-		{
-			print("generating XY XZ projections");
-			saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName);
-		}
-		close();
-		
-
 	}
-	if(bShowDetection)
+	else 
 	{
-		print("adding detection to the overlay");
-		selectImage(origID);
-		Stack.setChannel(nChAlign);
-		for(nSl=nBeginSlice;nSl<=nEndSlice;nSl++)
-		{
-			Stack.setSlice(nSl);
-			diamPx = globDiam[nSl-1]/pW;
-			makeOval(globX[nSl-1]+1-0.5*diamPx, globY[nSl-1]+1-0.5*diamPx, diamPx, diamPx);
-			run("Add Selection...");
-		}
+		print("Failed to locate BB for this ROI");
 	}
-
 	nTimeToc = getTime();
 	print("time per ROI: "+toString((nTimeToc-nTimeTic)/1000)+" s");
-
+	selectWindow("Log");
+	saveAs("Text", logDir+sTimeStamp+"_log_s1_extract_BB_macro.txt");
 
 }
 selectImage(templateID);
@@ -248,9 +266,10 @@ close();
 selectImage(origExpID);
 close();
 print("all ROIs done.");
+print("detected BB for "+toString(nRoiLocated) +" out of "+toString(nTotROIS)+" ROIs.");
 selectWindow("Log");
+saveAs("Text", logDir+sTimeStamp+"_log_s1_extract_BB_macro.txt");
 
-saveAs("Text", filesDir+getTimeStamp_sec()+"_log_s1_extract_BB_macro.txt");
 setBatchMode(false);
 
 function saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName)
