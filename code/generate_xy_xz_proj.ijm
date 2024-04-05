@@ -30,7 +30,7 @@ for (nFile = 0; nFile < list.length; nFile++)
 			Stack.setChannel(i);
 			resetMinAndMax();
 		}
-		saveAs("Tiff", filesXYDir+"MAX_XY_"+noExtFilename+".tif");
+		saveAs("Tiff", filesXYDir+noExtFilename+"_max_xy.tif");
 		close();
 		selectImage(openImageID);
 		run("Select All");
@@ -47,7 +47,7 @@ for (nFile = 0; nFile < list.length; nFile++)
 			Stack.setChannel(i);
 			resetMinAndMax();
 		}
-		saveAs("Tiff", filesXZDir+"MAX_XZ_"+noExtFilename+".tif");
+		saveAs("Tiff", filesXZDir+noExtFilename+"_max_xz.tif");
 		close();
 		selectImage(openImageID);
 		close();

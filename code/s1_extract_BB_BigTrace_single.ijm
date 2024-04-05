@@ -3,7 +3,7 @@
 // this macro requires the following plugin to be installed
 // https://github.com/UU-cellbiology/Correlescence/releases/tag/v0.0.7
 
-nVersion = "20240429";
+nVersion = "20240404";
 
 Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 
@@ -279,7 +279,7 @@ function saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName)
 		run("Make Composite");
 		Stack.setChannel(nChAlign);
 		resetMinAndMax();
-		saveAs("Tiff", filesAlignedXYDir+"MAX_XY_"+sRoiName+".tif");
+		saveAs("Tiff", filesAlignedXYDir+sRoiName+"_max_xy.tif");
 		close();
 		selectImage(finID);
 		run("Select All");
@@ -293,7 +293,7 @@ function saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName)
 		run("Make Composite");
 		Stack.setChannel(nChAlign);
 		resetMinAndMax();
-		saveAs("Tiff", filesAlignedXZDir+"MAX_XZ_"+sRoiName+".tif");
+		saveAs("Tiff", filesAlignedXZDir+sRoiName+"_max_xz.tif");
 		close();
 		selectImage(finID);
 }
@@ -387,8 +387,10 @@ function makeTemplateCircles(bitD, tempW, tempH, nSD,nDiamMin, nDiamMax, pW)
 		//nBorderPix = Math.round((0.5*nDiameter+2*nSD)/pW);
 		
 		//make an image of a circle
-		makeOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
-		run("Draw", "slice");
+		setLineWidth(1);
+		drawOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
+		//makeOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
+		//run("Draw", "slice");
 		run("Select All");
 		//blur
 		run("Gaussian Blur...", "sigma="+toString(nSDpix));
@@ -403,7 +405,7 @@ function getTimeStamp_sec()
 	// returns timestamp: yearmonthdayhourminutesecond
 	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
 	
-	TimeStamp = toString(year)+IJ.pad(month,2)+IJ.pad(dayOfMonth,2);
+	TimeStamp = toString(year)+IJ.pad(month+1,2)+IJ.pad(dayOfMonth,2);
 	TimeStamp = TimeStamp+IJ.pad(hour,2)+IJ.pad(minute,2)+IJ.pad(second,2);
 	return TimeStamp;
 }
