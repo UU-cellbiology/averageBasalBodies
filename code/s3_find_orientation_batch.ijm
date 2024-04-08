@@ -29,6 +29,7 @@ sTimeStamp = getTimeStamp_sec();
 
 File.makeDirectory(filesRotatedDir);
 File.makeDirectory(filesRotatedDetectionDir);
+File.makeDirectory(logDir);
 //File.makeDirectory(filesMaskDir);
 print("\\Clear");
 print("Finding basal foot (step 3) macro ver "+nVersion);
