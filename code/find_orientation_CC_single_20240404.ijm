@@ -1,7 +1,6 @@
 //called from another macro
 values = getArgument();
 
-nVersion = "20240405";
 
 Stack.getDimensions(width, height, channels, slices, frames);
 if(values.length()>0)
@@ -41,8 +40,7 @@ else
 }
 
 nDiamMin =2*nSD;
-nAngleStep=1;
-nAngleRange = 380;
+nAngleStep=2;
 
 //preparations
 run("Set Measurements...", "mean min redirect=None decimal=5");
@@ -64,14 +62,9 @@ run("Z Project...", "projection=[Max Intensity]");
 tempID = getImageID();
 run("Duplicate...", "duplicate channels="+toString(nChAlign));
 run("Enhance Contrast", "saturated=0.35");
-
 maxPrID = getImageID();
 selectImage(tempID);
 close();
-selectImage(maxPrID);
-run("Tubeness", "sigma="+toString(nSD)+" use");
-rename("tubeness");
-tubID = getImageID();
 selectImage(maxPrID);
 
 //read diameter from results
@@ -107,10 +100,10 @@ selectImage(templateID);
 setSlice(1);
 run("Paste");
 run("Clear Results");
-dispMax = 0.3*nDiamMax/pW;
+dispMax = 0.5*nDiamMax/pW;
 run("2D cross-correlation", "calculate=[current image in stack and all others] for=1 calculation=[FFT cross-correlation (fast)] limit max="+toString(dispMax)+" max_0="+toString(dispMax));
 close();
-
+dLen = 1000000;
 circlX = 0;
 circlY = 0;
 circlDiam = 0;
@@ -119,6 +112,7 @@ for (i = 0; i < nTemplateSlN-1; i++)
 {
 	currShiftX=getResult("Xmax_(px)", i+1);
 	currShiftY=getResult("Ymax_(px)", i+1);
+	//dLenCurr = Math.sqrt(Math.pow(currShiftX,2)+Math.pow(currShiftY,2));
 	ccCurr = getResult("CC_max", i+1);
 	if(ccMAX<ccCurr)
 	{
@@ -145,8 +139,7 @@ nAngleTable = makeTemplateBB(bitD, width, height, circlX, circlY, nSD, circlDiam
 
 nAngleTotSlN = nAngleTable.length;
 templateID = getImageID();
-//selectImage(maxPrID);
-selectImage(tubID);
+selectImage(maxPrID);
 run("Select All");
 run("Copy");
 selectImage(templateID);
@@ -181,9 +174,8 @@ for(i=1; i<anglCC.length;i++)
 	}
 }
 rotAngle  = nAngleTable[maxInd];
-halfCC = 0.25*(minCC+maxCC);
+halfCC = 0.5*(minCC+maxCC);
 maxLocs= Array.findMaxima(anglCC, 0.002, 1);
-//print(maxLocs.length);
 bIsBad = true;
 for(i=0; i<maxLocs.length && bIsBad; i++)
 {
@@ -222,25 +214,19 @@ if(bShowDetection)
 	setSlice(maxInd+2);
 	run("Enhance Contrast", "saturated=0.35");
 	run("Duplicate...", "title=detectedSlice");
-	selectImage(tubID);
 	selectImage(maxPrID);
-	run("32-bit");
-	rename("maxpr");
-	run("Merge Channels...", "c5=tubeness c6=detectedSlice c7=maxpr create ignore");
+	run("Merge Channels...", "c1=["+getTitle()+"] c2=detectedSlice create ignore");
 	rename("rot_detected");
 	selectImage(templateID);
 	//rename("MAX_"+origTitle+"_detected");
 }
 else 
 {
-	selectImage(tubID);
-	close();
 	selectImage(maxPrID);
 	close();
 	selectImage(templateID);
 }
 close();
-
 selectImage(origID);
 
 //adjust canvas so that rotation center is in the middle
@@ -307,17 +293,16 @@ function makeTemplateBB(bitD, tempW, tempH, nCenterShiftX, nCenterShiftY, nSD, n
 	
 	//count slices
 	nTemplateSlN = 1;
-	for (nAngle = 0; nAngle<nAngleRange; nAngle+=nAngleStep)
+	for (nAngle = 0; nAngle<360; nAngle+=nAngleStep)
 	{
 		nTemplateSlN++;
 	}
 	nAngleTable = newArray(nTemplateSlN-1);
-	//newImage("BB_template", toString(bitD)+"-bit black", tempW, tempH, nTemplateSlN);
-	newImage("BB_template", "32-bit black", tempW, tempH, nTemplateSlN);
+	newImage("BB_template", toString(bitD)+"-bit black", tempW, tempH, nTemplateSlN);
 	templateID = getImageID();
 	nTempSlice = 2;
 	setLineWidth(0);
-	for (nAngle = 0; nAngle<nAngleRange; nAngle+=nAngleStep)
+	for (nAngle = 0; nAngle<360; nAngle+=nAngleStep)
 	{
 		selectImage(templateID);
 		setSlice(nTempSlice);
@@ -325,7 +310,7 @@ function makeTemplateBB(bitD, tempW, tempH, nCenterShiftX, nCenterShiftY, nSD, n
 		//circle should be fully visible
 		//make an image of a circle
 		setLineWidth(1);
-		//drawOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
+		drawOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
 		//makeOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
 		//Roi.setStrokeWidth(1);
 		//run("Draw", "slice");
@@ -349,12 +334,12 @@ function makeTemplateBB(bitD, tempW, tempH, nCenterShiftX, nCenterShiftY, nSD, n
 		}
 		*/
 			//single line	
-			nRadBB = Math.round(0.5*nDiam/pW)+2.0*nSDpix;
+			nRadBB = Math.round(0.5*nDiam/pW)+1.3*nSDpix;
 			nRadBB *=-1;
 			newX1 = -nRadBB*sin(nAngle*PI/180);
 			newY1 = nRadBB*cos(nAngle*PI/180);
 			
-			nRadOut = Math.round(0.5*nDiam/pW)+3.0*nSDpix+nDiam*0.5/pW;
+			nRadOut = Math.round(0.5*nDiam/pW)+1.5*nSDpix+nDiam*0.5/pW;
 			nRadOut *=-1;
 			newX2 = (-1)*nRadOut*sin(nAngle*PI/180);
 			newY2 = nRadOut*cos(nAngle*PI/180);
@@ -397,15 +382,11 @@ function isGoodAngle(nAngle, nCenterShiftX, nCenterShiftY, nSD, nDiam,  pW, nMod
 			nOut= getValue("Mean")-nMode;
 			if(nOut>0.5*nIn)
 			{
-				//print("false");
 				return false;
-				
 			}
 			else 
 			{
-				//print("true");
 				return true;
-				
 			}
 
 }
