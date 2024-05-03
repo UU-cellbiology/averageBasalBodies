@@ -24,7 +24,7 @@ filesDir = getDir("Choose data folder files...");
 macroDir = filesDir + "code/"
 filesExtractedDir = filesDir+"s2_extracted/";
 filesRotatedDir = filesDir+"s3_rotated/";
-filesRotatedDetectionDir = filesDir+"s3_rotated/detected/";
+filesRotatedDetectionDir = filesRotatedDir+"detected/";
 logDir = filesDir+"logs/";
 
 sTimeStamp = getTimeStamp_sec();
