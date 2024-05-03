@@ -13,7 +13,7 @@ nDiamMax=Dialog.getNumber();
 nDiamStep=Dialog.getNumber();
 nScaleXY=Dialog.getNumber();
 nScaleZ=Dialog.getNumber();
-nVersion = "20240424";
+nVersion = "20240503";
 
 
 //orientationMacroName ="find_orientation_single_20240301.ijm";
