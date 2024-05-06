@@ -75,7 +75,7 @@ for (nFile = 0; nFile < list.length; nFile++)
 			{	
 				bOneFile = false;
 				//rename final file
-				File.rename(filesAver+listTIF[nFileTIF], filesAver+sFolderName+"_"+scaleSuffix+"_"+listTIF[nFileTIF]);
+				File.rename(filesAver+listTIF[nFileTIF], filesAver+sFolderName+scaleSuffix+"_"+listTIF[nFileTIF]);
 			
 			}
 		}
