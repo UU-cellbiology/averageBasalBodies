@@ -1,27 +1,50 @@
-Dialog.create("Find BB orientation parameters:");
 
-Dialog.addNumber("Reference channel",2);
-Dialog.addNumber("SD of the ring (um)",0.18);
-Dialog.addNumber("Maximum diameter (um)",2.44);
-Dialog.addNumber("Diameter step (um)",0.1);
-Dialog.addNumber("Rescale XY factor",1.0);
-Dialog.addNumber("Rescale Z factor",1.0);
-Dialog.show();
-nChAlign=Dialog.getNumber();
-nSD=Dialog.getNumber();
-nDiamMax=Dialog.getNumber();
-nDiamStep=Dialog.getNumber();
-nScaleXY=Dialog.getNumber();
-nScaleZ=Dialog.getNumber();
+//called from another macro
+values = getArgument();
+
+nVersion = "20240503";
+bBatchFolder = false;
+if(values.length()>0)
+{
+	params = split(values, "");
+	nChAlign=parseInt(params[0]);
+	nSD=parseFloat(params[1]);
+	nDiamMax=parseFloat(params[2]);
+	nDiamStep=parseFloat(params[3]);
+	nScaleXY=parseFloat(params[4]);
+	nScaleZ=parseFloat(params[5]);
+	filesDir = params[6];
+	macroDir = params[7];
+    bBatchFolder = true;	
+}
+else
+{
+	Dialog.create("Find BB orientation parameters:");
+	Dialog.addNumber("Reference channel",2);
+	Dialog.addNumber("SD of the ring (um)",0.18);
+	Dialog.addNumber("Maximum diameter (um)",2.44);
+	Dialog.addNumber("Diameter step (um)",0.1);
+	Dialog.addNumber("Rescale XY factor",1.0);
+	Dialog.addNumber("Rescale Z factor",1.0);
+	Dialog.show();
+	nChAlign=Dialog.getNumber();
+	nSD=Dialog.getNumber();
+	nDiamMax=Dialog.getNumber();
+	nDiamStep=Dialog.getNumber();
+	nScaleXY=Dialog.getNumber();
+	nScaleZ=Dialog.getNumber();
+}
 nVersion = "20240503";
 
 
 //orientationMacroName ="find_orientation_single_20240301.ijm";
 orientationMacroName ="s3b_find_orientation_CC_single.ijm";
 //macroDir = getDir("Select a folder with macros...");
-filesDir = getDir("Choose data folder files...");
-
-macroDir = filesDir + "code/"
+if(!bBatchFolder)
+{
+	filesDir = getDir("Choose data folder files...");
+	macroDir = filesDir + "code/";
+}
 filesExtractedDir = filesDir+"s2_extracted/";
 filesRotatedDir = filesDir+"s3_rotated/";
 filesRotatedDetectionDir = filesRotatedDir+"detected/";
@@ -72,9 +95,16 @@ for (nFile = 0; nFile < list.length; nFile++)
 		//run find orientation
 		runstr=toString(nChAlign)+" "+toString(nSD)+" "+toString(nDiamMax)+" "+toString(nDiamStep)+" 0.0 1.0";
 		runMacro(macroDir + orientationMacroName, runstr);	
-
+		Stack.getDimensions(width, height, channels, slices, frames);
+		strOut = toString(channels);
+		for(nCh=1;nCh<=(channels-1);nCh++)
+		{
+			strOut = strOut+toString(nCh);
+		}
+		print(strOut);
+		run("Arrange Channels...", "new="+strOut);
 		saveAs("Tiff", filesRotatedDir+noExtFilename+".tif");
-
+		
 		close();
 		selectWindow("rot_detected");
 		saveAs("Tiff", filesRotatedDetectionDir+noExtFilename+"_rot.tif");
