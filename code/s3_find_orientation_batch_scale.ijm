@@ -46,7 +46,16 @@ if(!bBatchFolder)
 	macroDir = filesDir + "code/";
 }
 filesExtractedDir = filesDir+"s2_extracted/";
-filesRotatedDir = filesDir+"s3_rotated/";
+scaleSuffix = "";
+if(abs(nScaleXY-1.0)>0.001)
+{
+	scaleSuffix = scaleSuffix +"_XY"+toString(nScaleXY);
+}
+if(abs(nScaleZ-1.0)>0.001)
+{
+	scaleSuffix = scaleSuffix +"_Z"+toString(nScaleZ);
+}
+filesRotatedDir = filesDir+"s3_rotated"+scaleSuffix+"/";
 filesRotatedDetectionDir = filesRotatedDir+"detected/";
 logDir = filesDir+"logs/";
 
@@ -95,14 +104,6 @@ for (nFile = 0; nFile < list.length; nFile++)
 		//run find orientation
 		runstr=toString(nChAlign)+" "+toString(nSD)+" "+toString(nDiamMax)+" "+toString(nDiamStep)+" 0.0 1.0";
 		runMacro(macroDir + orientationMacroName, runstr);	
-		Stack.getDimensions(width, height, channels, slices, frames);
-		strOut = toString(channels);
-		for(nCh=1;nCh<=(channels-1);nCh++)
-		{
-			strOut = strOut+toString(nCh);
-		}
-		print(strOut);
-		run("Arrange Channels...", "new="+strOut);
 		saveAs("Tiff", filesRotatedDir+noExtFilename+".tif");
 		
 		close();
