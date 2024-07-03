@@ -63,7 +63,7 @@ for (nFile = 0; nFile < list.length; nFile++)
 		print("\\Clear");
 		
 		
-		runstr = "input=[Tif files (low memory, slow)]] select="+filesRotated+" for=[use channel "+toString(nChAlign)+"] initial=Centered number="+toString(nIterN)+" template=Average use constrain=[by voxels] x=30 y=30 z=100.000 intermediate registered choose=/"+filesAver;
+		runstr = "input=[Tif files (low memory, slow)]] select="+filesRotated+" for=[use channel "+toString(nChAlign)+"] initial=Centered number="+toString(nIterN)+" template=Average use constrain=[by voxels] x=20 y=20 z=100.000 intermediate registered choose=/"+filesAver;
 		run("Iterative Averaging", runstr);
 		selectWindow("Log");
 		saveAs("Text", filesAver+"Log.txt");
