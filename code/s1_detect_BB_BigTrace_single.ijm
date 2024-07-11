@@ -3,10 +3,10 @@
 // this macro requires the following plugin to be installed
 // https://github.com/UU-cellbiology/Correlescence/releases/tag/v0.0.7
 
-nVersion = "20240404";
+nVersion = "20240611";
 
 Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
-
+bBatchFolder = false;
 //in case it is called from another macro
 values = getArgument();
 if(values.length()>0)
@@ -16,13 +16,11 @@ if(values.length()>0)
 	nSD=parseFloat(params[1]);
 	nDiamMax=parseFloat(params[2]);
 	nDiamStep=parseFloat(params[3]);
-	bGenXYXZ = true;
-	if(parseFloat(params[4])==0)
-	{
-		bGenXYXZ=false;
-	}
-	bShowDetection = false;
+	filesDir = params[4];
+
+	bShowDetection = true;
 	bExtractStack = false;
+	bBatchFolder = true;
 }
 else
 {
@@ -32,7 +30,6 @@ else
 	Dialog.addNumber("Maximum diameter (um)",2.44);
 	Dialog.addNumber("Diameter step (um)",0.1);
 	Dialog.addCheckbox("Extract stacks? ", false);
-	Dialog.addCheckbox("Generate XY/XZ max proj?", false);
 	Dialog.addCheckbox("Show detection (in overlay)? ", true);
 	Dialog.show();
 	nChAlign=Dialog.getNumber();
@@ -40,13 +37,15 @@ else
 	nDiamMax=Dialog.getNumber();
 	nDiamStep=Dialog.getNumber();
 	bExtractStack=Dialog.getCheckbox();
-	bGenXYXZ=Dialog.getCheckbox();
 	bShowDetection=Dialog.getCheckbox();
 
 }
 
 nDiamMin =3*nSD;
-filesDir = getDir("Choose a folder to save output...");
+if(!bBatchFolder)
+{
+	filesDir = getDir("Choose a folder to save output...");
+}
 print("\\Clear");
 print("Detecting basal bodies (step 1) macro ver "+nVersion);
 print("Parameters values");
@@ -60,15 +59,6 @@ logDir = filesDir+"logs/";
 File.makeDirectory(logDir);
 
 sTimeStamp = getTimeStamp_sec();
-
-if(bGenXYXZ)
-{
-	filesAlignedXYDir = filesAlignedDir+"detectedXY/";
-    File.makeDirectory(filesAlignedXYDir);
-    filesAlignedXZDir = filesAlignedDir+"detectedXZ/";
-    File.makeDirectory(filesAlignedXZDir);
-
-}
 
 setBatchMode(true);
 
@@ -90,6 +80,7 @@ getVoxelSize(pW, pH, pD, unit);
 //getPixelSize(unit, pW, pH);
 nSDpix = nSD/pW; 
 nShiftThreshold=nSDpix*2;
+
 if(bShowDetection)
 {
 	run("Remove Overlay");
@@ -196,7 +187,7 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 		
 		
 		
-		if(bExtractStack || bGenXYXZ)
+		if(bExtractStack)
 		{
 			
 			//found coordinates, let's extract image data
@@ -228,11 +219,7 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 				print("exporting detected stack");
 				saveAs("Tiff", filesAlignedDir+sRoiName+".tif");
 			}
-			if(bGenXYXZ)
-			{
-				print("generating XY XZ projections");
-				saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName);
-			}
+
 			close();
 			
 	
@@ -258,7 +245,7 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 	nTimeToc = getTime();
 	print("time per ROI: "+toString((nTimeToc-nTimeTic)/1000)+" s");
 	selectWindow("Log");
-	saveAs("Text", logDir+sTimeStamp+"_log_s1_extract_BB_macro.txt");
+	saveAs("Text", logDir+sTimeStamp+"_log_s1_detect_BB_macro.txt");
 
 }
 selectImage(templateID);
@@ -268,35 +255,8 @@ close();
 print("all ROIs done.");
 print("detected BB for "+toString(nRoiLocated) +" out of "+toString(nTotROIS)+" ROIs.");
 selectWindow("Log");
-saveAs("Text", logDir+sTimeStamp+"_log_s1_extract_BB_macro.txt");
-
+saveAs("Text", logDir+sTimeStamp+"_log_s1_detect_BB_macro.txt");
 setBatchMode(false);
-
-function saveXYXZproj(filesAlignedXYDir, filesAlignedXZDir, nChAlign, sRoiName)
-{
-		finID=getImageID();
-		run("Z Project...", "projection=[Max Intensity]");
-		run("Make Composite");
-		Stack.setChannel(nChAlign);
-		resetMinAndMax();
-		saveAs("Tiff", filesAlignedXYDir+sRoiName+"_max_xy.tif");
-		close();
-		selectImage(finID);
-		run("Select All");
-		run("Reslice [/]...", "output="+toString(pD)+" start=Top");
-		tempRS=getImageID();
-		run("Z Project...", "projection=[Max Intensity]");
-		projXZ=getImageID();
-		selectImage(tempRS);
-		close();
-		selectImage(projXZ);
-		run("Make Composite");
-		Stack.setChannel(nChAlign);
-		resetMinAndMax();
-		saveAs("Tiff", filesAlignedXZDir+sRoiName+"_max_xz.tif");
-		close();
-		selectImage(finID);
-}
 
 
 
