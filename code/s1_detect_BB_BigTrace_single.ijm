@@ -3,7 +3,7 @@
 // this macro requires the following plugin to be installed
 // https://github.com/UU-cellbiology/Correlescence/releases/tag/v0.0.7
 
-nVersion = "20240611";
+nVersion = "20240728";
 
 Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 bBatchFolder = false;
@@ -27,7 +27,7 @@ else
 	Dialog.create("BB detection parameters:");
 	Dialog.addNumber("Channel for detection ",channels);
 	Dialog.addNumber("SD of the ring (um)",0.18);
-	Dialog.addNumber("Maximum diameter (um)",2.44);
+	Dialog.addNumber("Maximum diameter (um)",2.1);
 	Dialog.addNumber("Diameter step (um)",0.1);
 	Dialog.addCheckbox("Extract stacks? ", false);
 	Dialog.addCheckbox("Show detection (in overlay)? ", true);
@@ -79,7 +79,7 @@ Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 getVoxelSize(pW, pH, pD, unit);
 //getPixelSize(unit, pW, pH);
 nSDpix = nSD/pW; 
-nShiftThreshold=nSDpix*2;
+nShiftThreshold = nSDpix*2;
 
 if(bShowDetection)
 {
@@ -127,12 +127,23 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 	globCCMax = newArray(slices);
 	nBeginSlice = 1;
 	bFoundSpan = true;
+	nPrevDiam = 0;
 	while(nCurrSlice>0)
 	{
-		if(findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice,nCenterX, nCenterY)>0)
+		//running for the first time
+		if(nCurrSlice == nFirstSlice)
+		{
+			nShiftThreshold = sel_width*0.5;
+		}
+		else 
+		{
+			nShiftThreshold = nSDpix*2;
+		}
+		if(findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice,nCenterX, nCenterY,nPrevDiam)>0)
 		{
 			nCenterX = globX[nCurrSlice-1];
 			nCenterY = globY[nCurrSlice-1];
+			nPrevDiam = globDiam[nCurrSlice-1];
 			nCurrSlice--;
 		}
 		else 
@@ -149,11 +160,13 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 	if(nFirstSlice!=slices && bFoundSpan)
 	{
 		nCurrSlice = nFirstSlice+1;
-	    nCenterX = nCenterXini;
-	    nCenterY = nCenterYini;
+	    nCenterX = globX[nFirstSlice-1];
+	    nCenterY = globY[nFirstSlice-1];
+	   	nPrevDiam = globDiam[nFirstSlice-1];
+	   
 		while(nCurrSlice<=slices)
 		{
-			if(findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice,nCenterX, nCenterY)>0)
+			if(findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice,nCenterX, nCenterY, nPrevDiam)>0)
 			{
 				nCenterX = globX[nCurrSlice-1];
 				nCenterY = globY[nCurrSlice-1];
@@ -260,7 +273,7 @@ setBatchMode(false);
 
 
 
-function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice, nCenterX, nCenterY)
+function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice, nCenterX, nCenterY, nPrevDiam)
 {
 
 	selectImage(origExpID);
@@ -301,6 +314,13 @@ function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice, nCenterX, 
 	{
 		disp = sqrt(globX[nCurrSlice-1]*globX[nCurrSlice-1]+globY[nCurrSlice-1]*globY[nCurrSlice-1]);
 		if(disp>nShiftThreshold)
+		{
+			nShiftOk = 0;
+		}
+	}
+	if(nPrevDiam>0.0001)
+	{
+		if(abs((globDiam[nCurrSlice-1]-nPrevDiam)/nPrevDiam)>0.4)
 		{
 			nShiftOk = 0;
 		}
