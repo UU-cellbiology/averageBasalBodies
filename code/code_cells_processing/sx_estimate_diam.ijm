@@ -1,5 +1,5 @@
 
-nVersion = "20240611";
+nVersion = "20240923";
 
 bBatchFolder = false;
 
@@ -152,7 +152,7 @@ function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice)
 	run("Select All");
 	run("Paste");
 	run("Clear Results");
-	run("2D cross-correlation", "calculate=[current image in stack and all others] for=1 calculation=[FFT cross-correlation (fast)] limit max=10 max_0=10");
+	run("2D cross-correlation", "calculate=[current image in stack and all others] for=1 calculation=[FFT cross-correlation (fast)] limit max=20 max_0=20");
 	//close CC stack
 	close();
 	globX[nCurrSlice-1] = getResult("Xmax_(px)", 1);

@@ -3,7 +3,7 @@
 // this macro requires the following plugin to be installed
 // https://github.com/UU-cellbiology/Correlescence/releases/tag/v0.0.7
 
-nVersion = "20240728";
+nVersion = "20240729";
 
 Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 bBatchFolder = false;
@@ -318,13 +318,13 @@ function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice, nCenterX, 
 			nShiftOk = 0;
 		}
 	}
-	if(nPrevDiam>0.0001)
-	{
-		if(abs((globDiam[nCurrSlice-1]-nPrevDiam)/nPrevDiam)>0.4)
-		{
-			nShiftOk = 0;
-		}
-	}
+//	if(nPrevDiam>0.0001)
+//	{
+//		if(abs((globDiam[nCurrSlice-1]-nPrevDiam)/nPrevDiam)>0.4)
+//		{
+//			nShiftOk = 0;
+//		}
+//	}
 	if(nShiftOk == 1)
 	{
 		nCenterX += globX[nCurrSlice-1];

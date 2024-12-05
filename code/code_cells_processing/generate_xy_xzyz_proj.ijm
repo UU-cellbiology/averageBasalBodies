@@ -23,8 +23,11 @@ for (nFile = 0; nFile < list.length; nFile++)
 				
 		getVoxelSize(pW, pH, pD, unit);
 		run("Z Project...", "projection=[Max Intensity]");
-		run("Make Composite");
 		Stack.getDimensions(width, height, channels, slices, frames);
+		if(channels>1)
+		{
+			run("Make Composite");
+		}
 		for(i=1;i<=channels;i++)
 		{
 			Stack.setChannel(i);
@@ -62,7 +65,10 @@ for (nFile = 0; nFile < list.length; nFile++)
 		xzyzW = getWidth();
 		xzyzH = getHeight();
 		run("Canvas Size...", "width="+toString(xzyzW+10)+" height="+toString(xzyzH)+" position=Center zero");
-		run("Make Composite");
+		if(channels>1)
+		{
+			run("Make Composite");
+		}
 		for(i=1;i<=channels;i++)
 		{
 			Stack.setChannel(i);
@@ -75,3 +81,4 @@ for (nFile = 0; nFile < list.length; nFile++)
 		
 	}
 }
+print("All done.");
