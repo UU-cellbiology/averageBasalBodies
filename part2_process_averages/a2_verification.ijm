@@ -1,3 +1,14 @@
+
+//PARAMETERS 
+
+//This is the width of the line crossing the center of the basal body "thick top part" (in YZ or XY view)
+//to get intensity profile. This profile will be used to find BB diameter (position of sides in X or Y)
+nMiddleLineWidthSides = 5;
+// this is tolerance while finding maxima for marks (see above)
+nMaxToleranceSides = 200;
+
+
+
 Dialog.create("Batch homogenization");
 //Dialog.addNumber("Reference channel",2);
 
@@ -7,20 +18,21 @@ Dialog.create("Batch homogenization");
 //nIterN = Dialog.getNumber();
 
 //topDataFolderDir = getDir("Select top data folder...");
+//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/20240512_test/";
 topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_analysis_july_processed/";
 //topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_test/";
 
 //macroDir = getDir("Select code folder...");
 //print(topDataFolderDir);
-outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20241021/"; 
+outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/"; 
 //outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_test_avrg/";
 //outputDir = getDir("Choose output data folder...");
 //print(outputDir);
-prevMarkDir =  outputDir+"a1_scaling/BB_marks/";
-BBchanDir =  outputDir+"a1_scaling/BB_channel/";
-root1Dir =  outputDir+"a1_scaling/";
+prevMarkDir =  outputDir+"a1_measure/BB_marks/";
+BBchanDir =  outputDir+"a1_measure/BB_channel/";
+root1Dir =  outputDir+"a1_measure/";
 
-rootDir =  outputDir+"a2_scaling/";
+rootDir =  outputDir+"a2_verification/";
 File.makeDirectory(rootDir);
 marksBBDir = rootDir+"BB_marks/";
 File.makeDirectory(marksBBDir);
@@ -89,41 +101,49 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 
 				open(prevMarkDir+sAvrgName+"_YZ_max.tif");
 				yzID = getImageID();
+				//run("Clear Results");
 				Table.open(prevMarkDir+sAvrgName+"_marks.csv");
-				Table.rename(Table.title, "Results");
+				//Table.rename(Table.title, "Results");
 				setLineWidth(1);
 				for (i = 0; i < 3; i++) 
 				{
-					yH = getResult("C2", i);
+					yH = Table.get("C2", i);
+					//yH = getResult("C2", i);
 					drawLine(0, yH, getWidth()-1, yH);
 				}
-				nTop[nCurrFolderInd] =  getResult("C2", 0);
-				nMiddle[nCurrFolderInd] =  getResult("C2", 1);
-				nBottom[nCurrFolderInd] =  getResult("C2", 2);
-				nScalez1[nCurrFolderInd] =  nMiddle[nCurrFolderInd] -nTop[nCurrFolderInd] ;
+				//nTop[nCurrFolderInd] =  getResult("C2", 0);
+				//nMiddle[nCurrFolderInd] =  getResult("C2", 1);
+				//nBottom[nCurrFolderInd] =  getResult("C2", 2);
+				nTop[nCurrFolderInd] =  Table.get("C2", 0);
+				nMiddle[nCurrFolderInd] =  Table.get("C2", 1);
+				nBottom[nCurrFolderInd] =  Table.get("C2", 2);
+				nScalez1[nCurrFolderInd] =  nMiddle[nCurrFolderInd] - nTop[nCurrFolderInd] ;
 				nScalez2[nCurrFolderInd] =  nBottom[nCurrFolderInd] - nMiddle[nCurrFolderInd];
 				///saveAs("Tiff",marksBBDir+sAvrgName+"_YZ_marks.tif");
 
-				//close();
+				run("Close");
 				
 				//determine XY width 
 				//open BB channel				
 				open(BBchanDir+sAvrgName+"_BB.tif");
 				bbID = getImageID();
 				Stack.getDimensions(widthOrig, heightOrig, nChAlign, slices, frames);
+				//make a single reslice at the center of X
 				makeLine(nCenterX[nCurrFolderInd], 0, nCenterX[nCurrFolderInd], heightOrig-1);
 				Roi.setStrokeWidth(1);
 				run("Reslice [/]...", "slice_count=1");
 				yzC = getImageID();
+				
+				//position at the middle of basal body				
 				nZ = nTop[nCurrFolderInd] + 0.5*nScalez1[nCurrFolderInd];
 				makeLine(0, nZ,  heightOrig-1, nZ);
-				Roi.setStrokeWidth(5);
+				Roi.setStrokeWidth(nMiddleLineWidthSides);
 				profile = getProfile();
 				selectImage(yzC);
 				close();
 
 				selectImage(yzID);
-				maxEdgePos = Array.findMaxima(profile, 200);
+				maxEdgePos = Array.findMaxima(profile, nMaxToleranceSides);
 				setLineWidth(1);
 				for(i=0;i<2;i++)
 				{
@@ -138,22 +158,17 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				xzC = getImageID();
 				//nZ = nTop[nCurrFolderInd] + 0.5*nScalez1[nCurrFolderInd];
 				makeLine(0, nZ,  widthOrig-1, nZ);
-				Roi.setStrokeWidth(5);
+				Roi.setStrokeWidth(nMiddleLineWidthSides);
 				profile = getProfile();
 				selectImage(xzC);
 				close();
 				selectImage(bbID);
 				close();
 				
-				maxEdgePos = Array.findMaxima(profile, 200);
-				nWidthX[nCurrFolderInd] = Math.abs(maxEdgePos[0]-maxEdgePos[1]);
-				
-				
+				maxEdgePos = Array.findMaxima(profile, nMaxToleranceSides);
+				nWidthX[nCurrFolderInd] = Math.abs(maxEdgePos[0]-maxEdgePos[1]);								
 				saveAs("Tiff",marksBBDir+sAvrgName+"_YZ_marks.tif");
-
-				close();
-				
-
+				close();				
 				nSubFolder = listCurrFolder.length;
 			}
 		}
@@ -187,7 +202,7 @@ print("MeanScaleZ1 ",meanZ1);
 print("MeanScaleZ2 ",meanZ2);
 print("MeanX ",meanX);
 print("MeanY ",meanY);
-saveAs("Results",rootDir+"summary_fit_params.csv");
+saveAs("Results",rootDir+"summary_XYZ_scales.csv");
 for(i = 0; i<nCurrFolderInd; i++)
 {
 	sAvrgName = sNames[i];

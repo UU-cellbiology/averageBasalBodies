@@ -1,3 +1,12 @@
+
+
+//PARAMETERS
+//reference diameter of basal body (from EM)
+dAssumedBBDiamNM = 250.0;
+//Z anisotropy factor, i.e. it is equal to
+//Z pixel size (dist bwtween slices) divided by XY pixel size
+dZAnisotropy = 2.0;
+
 Dialog.create("Batch homogenization");
 //Dialog.addNumber("Reference channel",2);
 
@@ -7,18 +16,19 @@ Dialog.create("Batch homogenization");
 //nIterN = Dialog.getNumber();
 
 //topDataFolderDir = getDir("Select top data folder...");
+//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/20240512_test/";
 topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_analysis_july_processed/";
 //topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_test/";
 
 //macroDir = getDir("Select code folder...");
 //print(topDataFolderDir);
-outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20241021/"; 
+outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/";
 //outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_test_avrg/";
 //outputDir = getDir("Choose output data folder...");
 //print(outputDir);
-root2Dir =  outputDir+"a2_scaling/";
+root2Dir =  outputDir+"a2_verification/";
 
-rootDir =  outputDir+"a3_scaling/";
+rootDir =  outputDir+"a3_rescaling/";
 File.makeDirectory(rootDir);
 notRescaledBBDir = rootDir+"not_rescaled/";
 File.makeDirectory(notRescaledBBDir);
@@ -31,14 +41,14 @@ listFolder = getFileList(topDataFolderDir);
 //setBatchMode(true);
 //count all folders
 nTotFolders = 0;
-for (nFolder = 0; nFolder < listFolder.length; nFolder++) 
-{	
+for (nFolder = 0; nFolder < listFolder.length; nFolder++)
+{
 	if(endsWith(listFolder[nFolder], suffix))
-	{	
+	{
 		nTotFolders++;
 	}
 }
-print("Detected "+toString(nTotFolders) +" folders."); 
+print("Detected "+toString(nTotFolders) +" folders.");
 sNames = newArray(nTotFolders);
 
 nMiddle = newArray(nTotFolders);
@@ -48,19 +58,18 @@ nWidthY = newArray(nTotFolders);
 nWidthX = newArray(nTotFolders);
 sNameCheck = newArray(nTotFolders);
 //read scales
-Table.open(root2Dir+"summary_fit_params.csv");
+Table.open(root2Dir+"summary_XYZ_scales.csv");
 Table.rename(Table.title, "Results");
-for (i = 0; i < nResults(); i++) 
+for (i = 0; i < nResults(); i++)
 {
     nMiddle[i] = getResult("Middle", i);
     nWidthX[i] = getResult("XSize", i);
     nWidthY[i] = getResult("YSize", i);
     nScalez1[i] = getResult("ZScale1", i);
     nScalez2[i] = getResult("ZScale2", i);
-   sNameCheck[i] = getResultLabel(i);
+    sNameCheck[i] = getResultLabel(i);
 }
-//Array.getStatistics(nScalez1, min, max, meanZ1, stdDev);
-//Array.getStatistics(nScalez2, min, max, meanZ2, stdDev);
+
 Array.getStatistics(nWidthX, min, max, meanX, stdDev);
 Array.getStatistics(nWidthY, min, max, meanY, stdDev);
 //print("MeanScaleZ1 ",meanZ1);
@@ -71,19 +80,19 @@ meanXY = Math.max(meanX, meanY);
 print("MeanXY ",meanXY);
 
 nCurrFolderInd = 0;
-for (nFolder = 0; nFolder < listFolder.length; nFolder++) 
-{	
+for (nFolder = 0; nFolder < listFolder.length; nFolder++)
+{
 	if(endsWith(listFolder[nFolder], suffix))
-	{	
+	{
 		folderPath = topDataFolderDir+listFolder[nFolder];
 		sFolderName = substring(listFolder[nFolder], 0, lengthOf(listFolder[nFolder])-lengthOf(suffix));
 		//print(folderPath);
 		suffixSF = "avg/";
 		listCurrFolder = getFileList(folderPath);
-		for (nSubFolder = 0; nSubFolder < listCurrFolder.length; nSubFolder++) 
+		for (nSubFolder = 0; nSubFolder < listCurrFolder.length; nSubFolder++)
 		{
 			if(endsWith(listCurrFolder[nSubFolder], suffixSF))
-			{	
+			{
 				sSubFolderName = substring(listCurrFolder[nSubFolder], 0, lengthOf(listCurrFolder[nSubFolder])-lengthOf(suffixSF));
 				sSubFolderPath = folderPath+listCurrFolder[nSubFolder];
 				//print();
@@ -92,43 +101,21 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				print(sAvrgName);
 				print(sNameCheck[nCurrFolderInd]);
 				open(sSubFolderPath+sAvrgName+".tif");
-				
+
 				fileID = getImageID();
-				//get only channel we need
 				run("Select All");
 				Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 				print("Slices  not rescaled",slices);
 				slBefore = slices;
 				getVoxelSize(pxWSize, pxHSize, pxDSize, unit);
-				sTitle = getTitle();
-				run("Split Channels");
-				sPref2 = "C1-";
-				//print (channels);
-				if(channels ==2)
-				{
-					newImage("C3-"+sTitle, "32-bit black", widthOrig, heightOrig, slices);
-					sPref1 = "C2-";
-					sPref3 = "C3-";
-				}
-				if(channels ==3) 
-				{
-					sPref1 = "C3-";
-					sPref3 = "C2-";					
-				}
-				if(channels ==4) 
-				{
-					sPref1 = "C4-";
-					sPref3 = "C2-";
-					selectWindow("C3-"+sTitle);
-					close();
-				}
-				
-				run("Merge Channels...", "c1=["+ sPref1 + sTitle +
-				"] c2=["+ sPref2 + sTitle + 
-				"] c3=["+ sPref3 + sTitle +
-				"] create ignore");
+
+				//make the BB (total protein staining) the first channel
+				//before that it is always the last. But some input files
+				// have 2, 3 or 4 channels, so we need to handle that
+				rearrangeChannels();
 				saveAs("Tiff",notRescaledBBDir+sAvrgName+"_ch.tif");
 				normCh = getImageID();
+
 				//close();
 				run("Reslice [/]...", "start=Left");
 				reslID = getImageID();
@@ -152,13 +139,13 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				selectImage(tempID);
 				close();
 				selectImage(scaledID);
-				rename("BOTTOM");			
+				rename("BOTTOM");
 				run("Combine...", "stack1=TOP stack2=BOTTOM combine");
 				combFinID = getImageID();
 				selectImage(reslID);
 				close();
 				selectImage(normCh);
-				close();					
+				close();
 				selectImage(combFinID);
 				run("Reslice [/]...", "start=Top flip");
 				preFinID = getImageID();
@@ -173,7 +160,7 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				}
 				preFinID = getImageID();
 				run("Scale...", "x="+toString( meanXY/nWidthX[nCurrFolderInd])+" y="+toString( meanXY/nWidthY[nCurrFolderInd])+" interpolation=Bicubic average create");
-				setVoxelSize(250.0/meanXY, 250.0/meanXY, 2*250/meanXY, "nm");
+				setVoxelSize(dAssumedBBDiamNM/meanXY, dAssumedBBDiamNM/meanXY, dZAnisotropy*dAssumedBBDiamNM/meanXY, "nm");
 				Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 				print("Slices rescaled ",slices);
 				print("Estimate slices rescaled ",  0.5*nMiddle[nCurrFolderInd]*nScalez1[nCurrFolderInd]+
@@ -201,8 +188,8 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				close();
 				selectImage(preFinID);
 				close();
-				
-		
+
+
 				nSubFolder = listCurrFolder.length;
 			}
 		}
@@ -219,11 +206,46 @@ function getFirstFileNameNoExt(path, suffixFile)
 {
 	//suffixFile = ".tif";
 	listFiles = getFileList(path);
-	for (nF = 0; nF < listFiles.length; nF++) 
-	{	
+	for (nF = 0; nF < listFiles.length; nF++)
+	{
 		if(endsWith(listFiles[nF], suffixFile))
-		{	
+		{
 			return 	substring(listFiles[nF], 0, lengthOf(listFiles[nF])-lengthOf(suffixFile));
 		}
 	}
+}
+
+//make the BB (total protein staining) the first channel
+//before that it is always the last. But some input files
+// have 2, 3 or 4 channels, so we need to handle that
+function rearrangeChannels()
+{
+			sTitle = getTitle();
+			Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
+			run("Split Channels");
+			sPref2 = "C1-";
+			//print (channels);
+			if(channels == 2)
+			{
+				newImage("C3-"+sTitle, "32-bit black", widthOrig, heightOrig, slices);
+				sPref1 = "C2-";
+				sPref3 = "C3-";
+			}
+			if(channels == 3)
+			{
+				sPref1 = "C3-";
+				sPref3 = "C2-";
+			}
+			//in case of 4 channels, ch3 can be ignored
+			if(channels == 4)
+			{
+				sPref1 = "C4-";
+				sPref3 = "C2-";
+				selectWindow("C3-"+sTitle);
+				close();
+			}
+			run("Merge Channels...", "c1=["+ sPref1 + sTitle +
+			"] c2=["+ sPref2 + sTitle +
+			"] c3=["+ sPref3 + sTitle +
+			"] create ignore");
 }

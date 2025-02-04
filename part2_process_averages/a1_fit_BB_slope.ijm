@@ -1,3 +1,14 @@
+
+//PARAMETERS 
+
+// smooth scale for the calculation of the gradient image (edges)
+nSmoothScale = 3;
+//This is the width of the line in the middle of the gradient image 
+//to get intensity profile. This profile will be used to find intensity maximum
+nMiddleLineWidthEdges = 15;
+// this is tolerance while finding maxima for marks (see above)
+nMaxToleranceEdges = 20;
+
 Dialog.create("Batch homogenization");
 //Dialog.addNumber("Reference channel",2);
 
@@ -7,27 +18,21 @@ Dialog.create("Batch homogenization");
 //nIterN = Dialog.getNumber();
 
 //topDataFolderDir = getDir("Select top data folder...");
+//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/20240512_test/";
 topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_analysis_july_processed/";
-//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_test/";
 
 //macroDir = getDir("Select code folder...");
 //print(topDataFolderDir);
-outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20241021/"; 
+outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/"; 
 //outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_test_avrg/";
 //outputDir = getDir("Choose output data folder...");
 //print(outputDir);
-rootDir =  outputDir+"a1_scaling/";
+rootDir =  outputDir+"a1_measure/";
 File.makeDirectory(rootDir);
 stacksBBDir = rootDir+"BB_channel/";
 File.makeDirectory(stacksBBDir);
-csvBBDir = rootDir+"BB_csv/";
-File.makeDirectory(csvBBDir);
-fitPicBBDir = rootDir+"plots_D_fits/";
-File.makeDirectory(fitPicBBDir);
 intProfBBDir = rootDir+"plots_intProf/";
 File.makeDirectory(intProfBBDir);
-intProfCenterBBDir = rootDir+"plots_intProfCenter/";
-File.makeDirectory(intProfCenterBBDir);
 marksBBDir = rootDir+"BB_marks/";
 File.makeDirectory(marksBBDir);
 //setBatchMode(true);
@@ -46,10 +51,7 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 }
 print("Detected "+toString(nTotFolders) +" folders."); 
 sNames = newArray(nTotFolders);
-fFitTop = newArray(nTotFolders);
-fFitBottom = newArray(nTotFolders);
-fFitZPos = newArray(nTotFolders);
-fFitSlope = newArray(nTotFolders);
+
 nToTZSlices = newArray(nTotFolders);
 fPxWSize = newArray(nTotFolders);
 fPxHSize = newArray(nTotFolders);
@@ -79,9 +81,14 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				print(sAvrgName);
 				open(sSubFolderPath+sAvrgName+".tif");
 				fileID = getImageID();
-				//get only channel we need
+				
+				//get only channel we need, i.e. total protein stain
 				run("Select All");
+				//nChAling <- number of channel with total protein stain,
+				// in our case it is always the last channel,
+				// so we get its number here
 				Stack.getDimensions(widthOrig, heightOrig, nChAlign, slices, frames);
+				
 				nToTZSlices[nCurrFolderInd] = slices;
 				getVoxelSize(pxWSize, pxHSize, pxDSize, unit);
 				fXY_Zscale = pxDSize/pxWSize;
@@ -90,16 +97,20 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				fPxDSize[nCurrFolderInd] = pxDSize;
 				run("Duplicate...", "title=BB duplicate channels="+toString(nChAlign));
 				imageBB = getImageID();
-				
+				//close original stack
+				selectImage(fileID);
+				close();
 
-				
+				// Plot Z-axis profile
 				run("Grays");
 				run("Select All");
 				run("Plot Z-axis Profile");
 				saveAs("PNG", intProfBBDir+ sAvrgName+"_fit.png" );
-				
+				// store intensity values			
 				Plot.getValues(slice, weights);
 				close();
+				
+				//BUILD YZ VIEW MAX PROJECTION
 				selectImage(imageBB);
 				run("Select All");
 				run("Reslice [/]...", "start=Left");
@@ -108,133 +119,57 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				yzID = getImageID();
 				selectImage(resliceID);
 				close();
-//				selectImage(imageBB);
-//				saveAs("Tiff",stacksBBDir+sAvrgName+"_BB.tif");
-//				close();
-				selectImage(fileID);
+				selectImage(imageBB);
+				saveAs("Tiff",stacksBBDir+sAvrgName+"_BB.tif");
 				close();
+
+				// get the center XY coordinates at the slice 
+				// with the maximum intensity along Z (using weights above) 
 				sCSVName = getFirstFileNameNoExt(sSubFolderPath, "_diam.csv");
-				//File.copy(sSubFolderPath+sCSVName+"_diam.csv", csvBBDir+sCSVName+"_BB.csv");
 				Table.open(sSubFolderPath+sCSVName+"_diam.csv");
 				Table.rename(Table.title, "Results");
-				//open(sSubFolderPath+sCSVName+"_diam.csv");
-				xpoints = newArray(nResults);
-				ypoints = newArray(nResults);
+
 				fMaxInt = -100.0;
 				dCenterX = 0;
 				dCenterY = 0;
 				for (i = 0; i < nResults(); i++) 
 				{
-				   xpoints[i] = getResult("finZ", i);
-				   ypoints[i] = getResult("finDiam", i);
 				   setResult("IntWeight", i, weights[i]);
 				   if(weights[i]>fMaxInt)
 				   {
-				   	fMaxInt = weights[i];
-				   	dCenterX = getResult("finX", i);
-				   	dCenterY = getResult("finY", i);
+					   	fMaxInt = weights[i];
+					   	dCenterX = getResult("finX", i);
+					   	dCenterY = getResult("finY", i);
 				   }
 				}
 				print(fMaxInt);
-				
-				saveAs("Results", csvBBDir+sCSVName+"_BB_fitdata.csv");
 
-				Fit.doWeightedFit("Rodbard", xpoints, ypoints, weights);
-				
-
-				Fit.plot;
-				fFitTop[nCurrFolderInd] = Fit.p(0);
-				fFitSlope[nCurrFolderInd] = Fit.p(1);
-				fFitZPos[nCurrFolderInd] = Fit.p(2);
-				fFitBottom[nCurrFolderInd] = Fit.p(3);
-
-				rename(sAvrgName+"_fit");
-				saveAs("PNG", fitPicBBDir+ sAvrgName+"_fit.png" );
-				close();
-
-				//get centrl profile
-				selectImage(imageBB);
-				//print(dCenterY);
+				//correct coordinates to get absolute value
 				dCenterX = dCenterX*2 + widthOrig*0.5;
 				dCenterY = dCenterY*2 + heightOrig*0.5;
 				fCenterX[nCurrFolderInd] = dCenterX;
 				fCenterY[nCurrFolderInd] = dCenterY;
 				
-				nCW = fFitTop[nCurrFolderInd]/pxWSize;
-				makeRectangle(dCenterX-0.5*nCW, dCenterY-0.5*nCW, nCW, nCW);
-				run("Plot Z-axis Profile");
-				Plot.getValues(slice, centerInt);
-				
-				saveAs("PNG", intProfCenterBBDir+ sAvrgName+"_center.png" );
-				close();
-			
-				selectImage(imageBB);
-				saveAs("Tiff",stacksBBDir+sAvrgName+"_BB.tif");
-				close();
-				
+				//calculate Edges (max of gradient)
+				selectImage(yzID);				
+				run("FeatureJ Edges", "compute smoothing="+toString(nSmoothScale)+" lower=[] higher=[]");
+				gradID = getImageID();	
 				selectImage(yzID);
-				
-				run("FeatureJ Edges", "compute smoothing=3 lower=[] higher=[]");
-				gradID = getImageID();
-				
-				selectImage(yzID);
-				//calc position transition top			
-				nFrTransTop= invRodb (fFitSlope[nCurrFolderInd],
-										fFitZPos[nCurrFolderInd], 0.9);
-				nFrTransTop = Math.round(nFrTransTop*fXY_Zscale);
-				nFrTransBottom= invRodb (fFitSlope[nCurrFolderInd],
-											fFitZPos[nCurrFolderInd], 0.1);
-				nFrTransBottom = Math.round(nFrTransBottom*fXY_Zscale);
-				//draw lines 
-				setLineWidth(1);
-				//drawLine(0, nFrTransTop, heightOrig-1, nFrTransTop);
-				//run("Draw", "slice");
-				//drawLine(0, nFrTransBottom, heightOrig-1, nFrTransBottom);
-				//run("Draw", "slice");
-				
-				fMaxInt = -100;
-				for (i = 0; i < nResults(); i++) 
-				{
-					if(fMaxInt<centerInt[i])
-					{
-						fMaxInt=centerInt[i] ;
-					}
-				}
-			
-				fIntTh = fMaxInt*0.5;
-				dInd = -1;
-				//find the top
-				for (i = 0; i < nResults(); i++) 
-				{
-					if(centerInt[i]>fIntTh)
-					{
-						dInd = i;
-						//print(dInd);
-						i =nResults();
-					}
-				}
-				//drawLine(0, dInd*fXY_Zscale, heightOrig-1,dInd*fXY_Zscale);
-				//run("Draw", "slice");
-				
 				saveAs("Tiff",marksBBDir+sAvrgName+"_YZ_max.tif");
-				//setAutoThreshold("Default dark no-reset");
-				//run("Threshold...");
-				//run("Convert to Mask");
-				//run("Skeletonize");
-				//saveAs("Tiff",marksBBDir+sAvrgName+"_skel.tif");
 				close();
-				//selectImage(yzID);
-				//close();
-				//exit
 				selectImage(gradID);
+				
+				
+				// get intensity progile in the center
 				makeLine(dCenterY, 0, dCenterY, getHeight()-1);
-				Roi.setStrokeWidth(15);
+				
+				Roi.setStrokeWidth(nMiddleLineWidthEdges);
 
 				profile = getProfile();
 				//Array.getStatistics(profile, min, maxI); 
 				//Plot.create("Profile", "X", "Value", profile);
 
-				maxEdgePos = Array.findMaxima(profile, 20);
+				maxEdgePos = Array.findMaxima(profile, nMaxToleranceEdges);
 				Array.sort(maxEdgePos);
 				f = File.open(marksBBDir+sAvrgName+"_marks.csv");
 				for (nMax = 0; nMax < maxEdgePos.length; nMax++) 
@@ -248,7 +183,6 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				saveAs("Tiff",marksBBDir+sAvrgName+"_YZ_edge.tif");
 				close();
 				
-
 				nSubFolder = listCurrFolder.length;
 			}
 		}
@@ -260,20 +194,15 @@ run("Clear Results");
 for(i = 0; i<nCurrFolderInd; i++)
 {
 	setResult("Label", i, sNames[i]);
-	setResult("fit_Z", i, fFitZPos[i]);
-	setResult("fit_Slope_px", i, fFitSlope[i]);
-	setResult("fit_Top_px", i, fFitTop[i]/ fPxWSize[i]);
-	setResult("fit_Bottom_px", i, fFitBottom[i]/ fPxWSize[i]);
 	setResult("px_X", i, fPxWSize[i]);
 	setResult("px_Y", i, fPxHSize[i]);
 	setResult("px_Z", i, fPxDSize[i]);
 	setResult("center_X", i, fCenterX[i]);
-	setResult("center_Y", i, fCenterY[i]);
-	
+	setResult("center_Y", i, fCenterY[i]);	
 	setResult("TotZSlices", i, nToTZSlices[i]);
 
 }
-saveAs("Results",rootDir+"summary_fit_params.csv");
+saveAs("Results", rootDir+"summary_fit_params.csv");
 print("Done");
 
 function getFirstFileNameNoExt(path, suffixFile)
@@ -287,11 +216,4 @@ function getFirstFileNameNoExt(path, suffixFile)
 			return 	substring(listFiles[nF], 0, lengthOf(listFiles[nF])-lengthOf(suffixFile));
 		}
 	}
-}
-
-function invRodb (b,c, nFr)
-{
-	out = (1.0/nFr) - 1.0;
-	out = c*Math.pow(out, 1.0/b);
-	return out;
 }
