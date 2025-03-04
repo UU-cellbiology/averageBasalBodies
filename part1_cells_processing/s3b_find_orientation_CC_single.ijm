@@ -1,12 +1,17 @@
-//called from another macro
-values = getArgument();
+// Cell Biology, Neurobiology and Biophysics Department of Utrecht University.
+// email y.katrukha@uu.nl
+// full info, check https://github.com/UU-cellbiology/extractBasalBodies
 
-nVersion = "20240405";
+
+nVersion = "20250405";
 
 Stack.getDimensions(width, height, channels, slices, frames);
+values = getArgument();
+//called from another macro
+paramSeparator = "?";
 if(values.length()>0)
 {
-	params = split(values, "");
+	params = split(values, paramSeparator);
 	nChAlign=parseInt(params[0]);
 	nSD=parseFloat(params[1]);
 	nDiamMax=parseFloat(params[2]);

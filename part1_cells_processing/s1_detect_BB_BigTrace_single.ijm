@@ -1,17 +1,18 @@
 // Cell Biology, Neurobiology and Biophysics Department of Utrecht University.
 // email y.katrukha@uu.nl
-// this macro requires the following plugin to be installed
-// https://github.com/UU-cellbiology/Correlescence/releases/tag/v0.0.7
+// full info, check https://github.com/UU-cellbiology/extractBasalBodies
 
-nVersion = "20240729";
+nVersion = "20250205";
+
 
 Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
 bBatchFolder = false;
 //in case it is called from another macro
 values = getArgument();
+paramSeparator = "?";
 if(values.length()>0)
 {
-	params = split(values, "");
+	params = split(values, paramSeparator);
 	nChAlign=parseInt(params[0]);
 	nSD=parseFloat(params[1]);
 	nDiamMax=parseFloat(params[2]);

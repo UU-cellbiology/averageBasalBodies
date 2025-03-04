@@ -14,10 +14,10 @@ nSD = Dialog.getNumber();
 nDiamMax=Dialog.getNumber();
 nDiamStep=Dialog.getNumber();
 bGenXYXZ=Dialog.getCheckbox();
-nVersion = "20240429";
+nVersion = "20250205";
+paramSeparator = "?";
 
-
-destretchMacroName ="s4b_destretch_ellipse_single.ijm";
+destretchMacroName ="sXb_destretch_ellipse_single.ijm";
 filesDir = getDir("Choose data folder files...");
 
 macroDir = filesDir + "code/"
@@ -68,7 +68,7 @@ for (nFile = 0; nFile < list.length; nFile++)
 		openImageID=getImageID();
 		nTimeTic = getTime();
 	
-		runstr=toString(nChAlign)+" "+toString(nLineWidth)+" "+toString(nSD)+" "+toString(nDiamMax)+" "+toString(nDiamStep);
+		runstr=toString(nChAlign)+paramSeparator+toString(nLineWidth)+paramSeparator+toString(nSD)+paramSeparator+toString(nDiamMax)+paramSeparator+toString(nDiamStep);
 		runMacro(macroDir + destretchMacroName, runstr);	
 		destretchID = getImageID();
 		roiManager("Select", 0);

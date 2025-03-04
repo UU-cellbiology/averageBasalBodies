@@ -5,9 +5,10 @@
 //called from another macro
 values = getArgument();
 bFromMacro=false;
+paramSeparator = "?";
 if(values.length()>0)
 {
-	params = split(values, "");
+	params = split(values, paramSeparator);
 	nChAlign=parseInt(params[0]);
 	nLineWidth=parseInt(params[1]);
 	nSD=parseFloat(params[2]);

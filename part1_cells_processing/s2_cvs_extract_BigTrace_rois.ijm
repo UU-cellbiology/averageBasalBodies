@@ -1,11 +1,15 @@
-//called from another macro
-values = getArgument();
+// Cell Biology, Neurobiology and Biophysics Department of Utrecht University.
+// email y.katrukha@uu.nl
+// full info, check https://github.com/UU-cellbiology/extractBasalBodies
 
-nVersion = "20240611";
+nVersion = "20250205";
+
 bBatchFolder = false;
+values = getArgument();
+paramSeparator = "?";
 if(values.length()>0)
 {
-	params = split(values, "");
+	params = split(values, paramSeparator);
 	nOutThickness=parseInt(params[0]);
 	filesDir = params[1];
 	fileExtract = params[2];
@@ -41,7 +45,7 @@ print("Extracting BB from " +fileExtract);
 suffix = ".csv";
 list = getFileList(filesDetectedDir);
 
-roiFile =filesBTROIsDir+" BB_ROIs_btrois.csv";
+roiFile =filesBTROIsDir + "BB_ROIs_btrois.csv";
 print("exporting BigTrace ROIs to " +roiFile);
 selectWindow("Log");
 saveAs("Text", logDir+sTimeStamp+"_log_s2_extract_BB_macro.txt");
@@ -50,13 +54,13 @@ if(File.exists(roiFile))
 	File.delete(roiFile);
 }
 file_out = File.open(roiFile);
-print(file_out,"BigTrace_groups,version,0.4.1");
+print(file_out,"BigTrace_groups,version,0.5.2");
 print(file_out,"GroupsNumber,1\nBT_Group,1\nName,*undefined*");
 print(file_out,"PointSize,4\nPointColor,0,255,0,255");
 print(file_out,"LineThickness,"+toString(nOutThickness)+"\nLineColor,0,0,255,255");
 print(file_out,"RenderType,2");
 print(file_out,"End of BigTrace Groups");
-print(file_out,"BigTrace_ROIs,version,0.4.1");
+print(file_out,"BigTrace_ROIs,version,0.5.2");
 print(file_out,"ROIsNumber,"+toString(list.length));
 //print(f,"");
 
@@ -102,7 +106,7 @@ run("Open 3D image", "open=["+fileExtract+"]");
 Ext.btShapeInterpolation("Spline", 5);
 Ext.btIntensityInterpolation("Linear");
 Ext.btLoadROIs(roiFile, "Clean");
-Ext.btStraighten(2, filesExtractedDir);
+Ext.btStraighten(2, filesExtractedDir, "Square");
 Ext.btClose();
 //setBatchMode(false);
 print("extraction finished.");

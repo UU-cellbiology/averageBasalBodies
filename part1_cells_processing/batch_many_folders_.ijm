@@ -30,6 +30,7 @@ if(abs(nScaleZ-1.0)>0.001)
 	scaleSuffix = scaleSuffix +"_Z"+toString(nScaleZ);
 }
 
+paramSeparator = "?";
 
 suffix = "/";
 listFolder = getFileList(folderDir);
@@ -94,7 +95,7 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 		if(bAllGoesWell)
 		{
 			//step one, detection
-			runstr=toString(nChAlign)+" "+toString(nSD)+" "+toString(nDiamMax)+" "+toString(nDiamStep)+" " +filesDir;
+			runstr=toString(nChAlign)+paramSeparator+toString(nSD)+paramSeparator+toString(nDiamMax)+paramSeparator+toString(nDiamStep)+paramSeparator +filesDir;
 			runMacro(macroDir + "s1_detect_BB_BigTrace_single.ijm", runstr);
 			
 			print("\\Clear");
@@ -105,29 +106,28 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 			close();
 			
 			//step two, extraction
-			runstr=toString(nOutThickness)+" "+filesDir+" "+origFileTIF;
+			runstr=toString(nOutThickness)+paramSeparator+filesDir+paramSeparator+origFileTIF;
 			runMacro(macroDir + "s2_cvs_extract_BigTrace_rois.ijm", runstr);
 			
 			//step three, scaling and rotation
 			filesRotated = filesDir + "s3_rotated"+scaleSuffix+"/";
 			filesAver = filesDir  + "s3_rotated"+scaleSuffix+"_avg/";
 			File.makeDirectory(filesAver);
-			runstr=toString(nChAlign)+" "+toString(nSD)+" "+toString(nDiamMax)+" "+toString(nDiamStep)+" "+toString(nScaleXY)+" "+toString(nScaleZ);
-			runstr=runstr + " "+filesDir+" "+ " "+macroDir+" ";
+			runstr=toString(nChAlign)+paramSeparator+toString(nSD)+paramSeparator+toString(nDiamMax)+paramSeparator+toString(nDiamStep)+paramSeparator+toString(nScaleXY)+paramSeparator+toString(nScaleZ);
+			runstr=runstr + paramSeparator+filesDir+paramSeparator+macroDir+paramSeparator;
 			runMacro(macroDir + "s3_find_orientation_batch_scale.ijm", runstr);
 			
 			//step four, averaging
 			print("\\Clear");						
-			runstr = "input=[Tif files (low memory, slow)]] select="+filesRotated+" for=[use channel "+toString(nChAlign)+"] initial=Centered number="+toString(nIterN)+" template=Average use constrain=[by voxels] x=20 y=20 z=100.000 intermediate registered choose=/"+filesAver;
+			runstr = "input=[Tif files (low memory, slow)]] select=["+filesRotated+"] for=[use channel "+toString(nChAlign)+"] initial=Centered number="+toString(nIterN)+" template=Average use constrain=[by voxels] x=20 y=20 z=100.000 intermediate registered choose=["+filesAver+"]";
 			run("Iterative Averaging", runstr);
 			selectWindow("Log");
-			saveAs("Text", filesAver+"Log.txt");
+			saveAs("Text", filesAver+ getTimeStamp_sec()+"_log_averaging.txt");
 			print("fitting diameters");
 			//step five, quantifications of diameter
-			runstr=toString(nChAlign)+" "+toString(nSD)+" "+toString(1.5)+" "+toString(0.05)+" "+toString(1.0/nScaleXY)+" "+toString(filesAver);
-			runMacro(macroDir + "sx_estimate_diam.ijm", runstr);
-			//runstr=toString(nChAlign)+" "+toString(nSD)+" "+toString(1.5)+" "+toString(0.05)+" "+toString(1.0/nScaleXY)+" "+toString(filesAver+"registered/");
-			//runMacro(macroDir + "sx_estimate_diam.ijm", runstr);
+			runstr=toString(nChAlign)+paramSeparator+toString(nSD)+paramSeparator+toString(1.5)+paramSeparator+toString(0.05)+paramSeparator+toString(1.0/nScaleXY)+paramSeparator+toString(filesAver);
+			runMacro(macroDir + "s3c_estimate_diam.ijm", runstr);
+
 			print("done.");
 			
 			///rename averaged and diameter
@@ -140,7 +140,8 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 					bOneFile = false;
 					finalAverTIF = listTIF[nFileTIF];
 					//rename final file
-					File.rename(filesAver+finalAverTIF, filesAver+sFolderName+scaleSuffix+"_"+finalAverTIF);				
+					File.rename(filesAver+finalAverTIF, filesAver+sFolderName+scaleSuffix+"_"+finalAverTIF);
+					
 				}
 			}
 			filenameCSV = substring(finalAverTIF, 0, lengthOf(finalAverTIF)-lengthOf(".tif"))+"_diam.csv";
@@ -150,4 +151,14 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 
 		
 	}
+}
+
+function getTimeStamp_sec() 
+{ 
+	// returns timestamp: yearmonthdayhourminutesecond
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+	
+	TimeStamp = toString(year)+IJ.pad(month+1,2)+IJ.pad(dayOfMonth,2);
+	TimeStamp = TimeStamp+IJ.pad(hour,2)+IJ.pad(minute,2)+IJ.pad(second,2);
+	return TimeStamp;
 }

@@ -1,12 +1,15 @@
+// Cell Biology, Neurobiology and Biophysics Department of Utrecht University.
+// email y.katrukha@uu.nl
+// full info, check https://github.com/UU-cellbiology/extractBasalBodies
 
-//called from another macro
-values = getArgument();
-
-nVersion = "20240503";
+nVersion = "20250205";
 bBatchFolder = false;
+values = getArgument();
+//called from another macro
+paramSeparator = "?";
 if(values.length()>0)
 {
-	params = split(values, "");
+	params = split(values, paramSeparator);
 	nChAlign=parseInt(params[0]);
 	nSD=parseFloat(params[1]);
 	nDiamMax=parseFloat(params[2]);
@@ -36,8 +39,6 @@ else
 }
 nVersion = "20240503";
 
-
-//orientationMacroName ="find_orientation_single_20240301.ijm";
 orientationMacroName ="s3b_find_orientation_CC_single.ijm";
 //macroDir = getDir("Select a folder with macros...");
 if(!bBatchFolder)
@@ -97,12 +98,10 @@ for (nFile = 0; nFile < list.length; nFile++)
 		openImageID=getImageID();
 		selectImage(openImageIDsmall);
 		close();
-		//open results
-		//run("Table... ", "open=["+filesDetectionDir+noExtFilename+".csv]");
-		//Table.rename(noExtFilename+".csv", "Results");
+
 
 		//run find orientation
-		runstr=toString(nChAlign)+" "+toString(nSD)+" "+toString(nDiamMax)+" "+toString(nDiamStep)+" 0.0 1.0";
+		runstr=toString(nChAlign)+paramSeparator+toString(nSD)+paramSeparator+toString(nDiamMax)+paramSeparator+toString(nDiamStep)+paramSeparator+"0.0"+paramSeparator+"1.0";
 		runMacro(macroDir + orientationMacroName, runstr);	
 		saveAs("Tiff", filesRotatedDir+noExtFilename+".tif");
 		
