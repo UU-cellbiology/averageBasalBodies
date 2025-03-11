@@ -125,7 +125,7 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 			saveAs("Text", filesAver+ getTimeStamp_sec()+"_log_averaging.txt");
 			print("fitting diameters");
 			//step five, quantifications of diameter
-			runstr=toString(nChAlign)+paramSeparator+toString(nSD)+paramSeparator+toString(1.5)+paramSeparator+toString(0.05)+paramSeparator+toString(1.0/nScaleXY)+paramSeparator+toString(filesAver);
+			runstr=toString(nChAlign)+paramSeparator+toString(nSD)+paramSeparator+toString(nDiamMax)+paramSeparator+toString(nDiamStep)*0.5+paramSeparator+toString(nScaleXY)+paramSeparator+toString(filesAver);
 			runMacro(macroDir + "s3c_estimate_diam.ijm", runstr);
 
 			print("done.");

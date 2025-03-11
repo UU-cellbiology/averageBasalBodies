@@ -205,21 +205,6 @@ for(i=0; i<maxLocs.length && bIsBad; i++)
 	}
 }
 
-/*
-maxAnglCC = -10000;
-rotAngle = 0;
-maxInd = 0;maxLocs[i]
-for (i = 1; i < anglCC.length; i++) 
-{
- 	if(anglCC[i]>maxAnglCC)
- 	{
- 		maxAnglCC = anglCC[i];
- 		maxInd = i-1;
- 		rotAngle = nAngleTable[i-1];
- 	}
-}
-rotAngle = nAngleTable[maxInd];
-*/
 print("final angle " +rotAngle);
 selectImage(templateID);
 if(bShowDetection)
@@ -330,42 +315,20 @@ function makeTemplateBB(bitD, tempW, tempH, nCenterShiftX, nCenterShiftY, nSD, n
 		//circle should be fully visible
 		//make an image of a circle
 		setLineWidth(1);
-		//drawOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
-		//makeOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
-		//Roi.setStrokeWidth(1);
-		//run("Draw", "slice");
-		/* triangle try)
-		dX =  1.5*nSDpix;
-		for(dXshift=-dX;dXshift<dX*1.5;dXshift+=2*dX)
-		{
-			nRadBB = Math.round(0.5*nDiam/pW)+1.0*nSDpix;
-			nRadBB *=-1;
-			newX1 = dXshift*cos(nAngle*PI/180) - nRadBB*sin(nAngle*PI/180);
-			newY1 = dXshift*sin(nAngle*PI/180)+nRadBB*cos(nAngle*PI/180);
-			
-			nRadOut = Math.round(0.5*nDiam/pW)+1.5*nSDpix+nDiam*0.4/pW;
-			nRadOut *=-1;
-			newX2 = (-1)*nRadOut*sin(nAngle*PI/180);
-			newY2 = nRadOut*cos(nAngle*PI/180);
-			makeLine(nCenterShiftX+newX1, nCenterShiftY+newY1, nCenterShiftX+newX2, nCenterShiftY+newY2);
-			Roi.setStrokeWidth(1);
-			run("Draw", "slice");
+
+		//single line	
+		nRadBB = Math.round(0.5*nDiam/pW)+2.0*nSDpix;
+		nRadBB *=-1;
+		newX1 = -nRadBB*sin(nAngle*PI/180);
+		newY1 = nRadBB*cos(nAngle*PI/180);
 		
-		}
-		*/
-			//single line	
-			nRadBB = Math.round(0.5*nDiam/pW)+2.0*nSDpix;
-			nRadBB *=-1;
-			newX1 = -nRadBB*sin(nAngle*PI/180);
-			newY1 = nRadBB*cos(nAngle*PI/180);
-			
-			nRadOut = Math.round(0.5*nDiam/pW)+3.0*nSDpix+nDiam*0.5/pW;
-			nRadOut *=-1;
-			newX2 = (-1)*nRadOut*sin(nAngle*PI/180);
-			newY2 = nRadOut*cos(nAngle*PI/180);
-			makeLine(nCenterShiftX+newX1, nCenterShiftY+newY1, nCenterShiftX+newX2, nCenterShiftY+newY2);
-			Roi.setStrokeWidth(1);
-			run("Draw", "slice");
+		nRadOut = Math.round(0.5*nDiam/pW)+3.0*nSDpix+nDiam*0.5/pW;
+		nRadOut *=-1;
+		newX2 = (-1)*nRadOut*sin(nAngle*PI/180);
+		newY2 = nRadOut*cos(nAngle*PI/180);
+		makeLine(nCenterShiftX+newX1, nCenterShiftY+newY1, nCenterShiftX+newX2, nCenterShiftY+newY2);
+		Roi.setStrokeWidth(1);
+		run("Draw", "slice");
 		run("Select All");
 		//blur
 		run("Gaussian Blur...", "sigma="+toString(nSDpix));

@@ -7,6 +7,8 @@ nVersion = "20250205";
 bBatchFolder = false;
 values = getArgument();
 paramSeparator = "?";
+nSmoothCenterLine = 5;
+
 if(values.length()>0)
 {
 	params = split(values, paramSeparator);
@@ -19,8 +21,10 @@ else
 {
 	Dialog.create("extract straightened BB:");
 	Dialog.addNumber("Thickness (diameter), px",105);
+	Dialog.addNumber("Smooth centerline, px",5);
 	Dialog.show();
 	nOutThickness = Dialog.getNumber();
+	nSmoothCenterLine = Dialog.getNumber();
 }
 if(!bBatchFolder)
 {
@@ -103,7 +107,7 @@ print("done. Running BigTrace.");
 selectWindow("Log");
 saveAs("Text", logDir+sTimeStamp+"_log_s2_extract_BB_macro.txt");
 run("Open 3D image", "open=["+fileExtract+"]");
-Ext.btShapeInterpolation("Spline", 5);
+Ext.btShapeInterpolation("Spline", toString(nSmoothCenterLine));
 Ext.btIntensityInterpolation("Linear");
 Ext.btLoadROIs(roiFile, "Clean");
 Ext.btStraighten(2, filesExtractedDir, "Square");

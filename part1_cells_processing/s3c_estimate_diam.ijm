@@ -15,7 +15,7 @@ if(values.length()>0)
 	nSD=parseFloat(params[1]);
 	nDiamMax=parseFloat(params[2]);
 	nDiamStep=parseFloat(params[3]);
-	nScaleXY = parseFloat(params[4]);
+	nScaleXY = 1.0/parseFloat(params[4]);
 	filesDir = params[5];
 	
 	bBatchFolder = true;
@@ -27,13 +27,13 @@ else
 	Dialog.addNumber("SD of the ring (um)",0.18);
 	Dialog.addNumber("Maximum diameter (um)",1.8);
 	Dialog.addNumber("Diameter step (um)",0.075);
-	Dialog.addNumber("Rescale XY factor",0.5);
+	Dialog.addNumber("Rescale XY factor",2.0);
 	Dialog.show();
 	nChAlign=Dialog.getNumber();
 	nSD=Dialog.getNumber();
 	nDiamMax=Dialog.getNumber();
 	nDiamStep=Dialog.getNumber();
-	nScaleXY = Dialog.getNumber();
+	nScaleXY = 1.0/Dialog.getNumber();
 }
 if(!bBatchFolder)
 {
