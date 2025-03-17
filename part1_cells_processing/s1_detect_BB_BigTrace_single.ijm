@@ -3,9 +3,12 @@
 // full info, check https://github.com/UU-cellbiology/extractBasalBodies
 
 nVersion = "20250205";
-
+if(nImages == 0 || roiManager("count")==0 )
+	exit("macro requires one image open and ROIs present in ROI manager");
 
 Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
+if(slices == 1)
+	exit("macro works only with 3D images.");
 bBatchFolder = false;
 //in case it is called from another macro
 values = getArgument();

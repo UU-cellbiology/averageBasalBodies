@@ -205,6 +205,7 @@ for(i=0; i<maxLocs.length && bIsBad; i++)
 	}
 }
 
+
 print("final angle " +rotAngle);
 selectImage(templateID);
 if(bShowDetection)
@@ -315,6 +316,10 @@ function makeTemplateBB(bitD, tempW, tempH, nCenterShiftX, nCenterShiftY, nSD, n
 		//circle should be fully visible
 		//make an image of a circle
 		setLineWidth(1);
+		//drawOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
+		//makeOval(nCenterShiftX-nRadPx, nCenterShiftY-nRadPx, 2*nRadPx, 2*nRadPx);
+		//Roi.setStrokeWidth(1);
+		//run("Draw", "slice");
 
 		//single line	
 		nRadBB = Math.round(0.5*nDiam/pW)+2.0*nSDpix;
