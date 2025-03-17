@@ -9,24 +9,27 @@ nMiddleLineWidthEdges = 15;
 // this is tolerance while finding maxima for marks (see above)
 nMaxToleranceEdges = 20;
 
-Dialog.create("Batch homogenization");
-//Dialog.addNumber("Reference channel",2);
 
-//Dialog.addNumber("Averaging iterations N", 4.0);
-//Dialog.show();
-//nChAlign=Dialog.getNumber();
-//nIterN = Dialog.getNumber();
+//ask for parameters 
+// comment segment below to run with fixed parameters
+Dialog.create("Shape segmenting");
+Dialog.addNumber("Gradient scale (px)", 3);
+Dialog.addNumber("Middle line width (px)", 15);
+Dialog.addNumber("Maximum tolerance", 20);
+Dialog.show();
+nSmoothScale = Dialog.getNumber();
+nMiddleLineWidthEdges = Dialog.getNumber();
+nMaxToleranceEdges = Dialog.getNumber();
 
-//topDataFolderDir = getDir("Select top data folder...");
-//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/20240512_test/";
-topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_analysis_july_processed/";
+topDataFolderDir = getDir("Select top data folder...");
+//uncomment and change when using too often
+//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_analysis_july_processed/";
 
-//macroDir = getDir("Select code folder...");
-//print(topDataFolderDir);
-outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/"; 
-//outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_test_avrg/";
-//outputDir = getDir("Choose output data folder...");
+outputDir = getDir("Choose output data folder...");
+//uncomment and change when using too often
+//outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/"; 
 //print(outputDir);
+
 rootDir =  outputDir+"a1_measure/";
 File.makeDirectory(rootDir);
 stacksBBDir = rootDir+"BB_channel/";
@@ -144,7 +147,7 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				}
 				print(fMaxInt);
 
-				//correct coordinates to get absolute value
+				//correct coordinates to get an absolute value
 				dCenterX = dCenterX*2 + widthOrig*0.5;
 				dCenterY = dCenterY*2 + heightOrig*0.5;
 				fCenterX[nCurrFolderInd] = dCenterX;
@@ -160,7 +163,7 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 				selectImage(gradID);
 				
 				
-				// get intensity progile in the center
+				// get intensity profile in the center
 				makeLine(dCenterY, 0, dCenterY, getHeight()-1);
 				
 				Roi.setStrokeWidth(nMiddleLineWidthEdges);

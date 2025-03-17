@@ -8,26 +8,25 @@ nMiddleLineWidthSides = 5;
 nMaxToleranceSides = 200;
 
 
+//ask for parameters 
+// comment segment below to run with fixed parameters
+Dialog.create("Shape verification");
+Dialog.addNumber("XY middle line width  (px)", 5);
+Dialog.addNumber("Maximum tolerance", 200);
+nMiddleLineWidthSides = Dialog.getNumber();
+nMaxToleranceSides = Dialog.getNumber();
+Dialog.show();
 
-Dialog.create("Batch homogenization");
-//Dialog.addNumber("Reference channel",2);
-
-//Dialog.addNumber("Averaging iterations N", 4.0);
-//Dialog.show();
-//nChAlign=Dialog.getNumber();
-//nIterN = Dialog.getNumber();
-
-//topDataFolderDir = getDir("Select top data folder...");
-//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/20240512_test/";
-topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_analysis_july_processed/";
-//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_test/";
-
-//macroDir = getDir("Select code folder...");
+topDataFolderDir = getDir("Select top data folder...");
+//uncomment and change when using too often
+//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_analysis_july_processed/";
 //print(topDataFolderDir);
-outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/"; 
-//outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_test_avrg/";
-//outputDir = getDir("Choose output data folder...");
+
+outputDir = getDir("Choose output data folder...");
+//uncomment and change when using too often
+//outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/";
 //print(outputDir);
+
 prevMarkDir =  outputDir+"a1_measure/BB_marks/";
 BBchanDir =  outputDir+"a1_measure/BB_channel/";
 root1Dir =  outputDir+"a1_measure/";

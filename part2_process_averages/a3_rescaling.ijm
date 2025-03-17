@@ -1,31 +1,32 @@
 
 
 //PARAMETERS
+//Z anisotropy factor, i.e. it is equal to
+//Z pixel size (dist between slices) divided by XY pixel size
+dZAnisotropy = 2.0;
 //reference diameter of basal body (from EM)
 dAssumedBBDiamNM = 250.0;
-//Z anisotropy factor, i.e. it is equal to
-//Z pixel size (dist bwtween slices) divided by XY pixel size
-dZAnisotropy = 2.0;
 
-Dialog.create("Batch homogenization");
-//Dialog.addNumber("Reference channel",2);
 
-//Dialog.addNumber("Averaging iterations N", 4.0);
-//Dialog.show();
-//nChAlign=Dialog.getNumber();
-//nIterN = Dialog.getNumber();
+//ask for parameters 
+// comment segment below to run with fixed parameters
+Dialog.create("Rescaling shapes");
+Dialog.addNumber("Z anisotropy factor",2);
+Dialog.addNumber("Reference BB diameter (nm)",250);
+Dialog.show();
+dZAnisotropy = Dialog.getNumber();
+dAssumedBBDiamNM = Dialog.getNumber();
 
-//topDataFolderDir = getDir("Select top data folder...");
-//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/20240512_test/";
-topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_analysis_july_processed/";
-//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_test/";
-
-//macroDir = getDir("Select code folder...");
+topDataFolderDir = getDir("Select top data folder...");
+//uncomment and change when using too often
+//topDataFolderDir="F:/PROJECTS/BasalBodiesAverage/Emma_analysis_july_processed/";
 //print(topDataFolderDir);
-outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/";
-//outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_test_avrg/";
-//outputDir = getDir("Choose output data folder...");
+
+outputDir = getDir("Choose output data folder...");
+//uncomment and change when using too often
+//outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/";
 //print(outputDir);
+
 root2Dir =  outputDir+"a2_verification/";
 
 rootDir =  outputDir+"a3_rescaling/";
