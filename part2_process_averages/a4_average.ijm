@@ -1,6 +1,6 @@
-//outputDir = getDir("Choose output data folder...");
+outputDir = getDir("Choose output data folder...");
 
-outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/";
+//outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_averages_20250204/";
 //outputDir = "F:/PROJECTS/BasalBodiesAverage/Emma_test_avrg/";
 
 //source = getDir("Select folder with rescaled data...");
