@@ -10,6 +10,9 @@ van Grinsven et al., to be published.
 
 For the full documentation, please refer to the **[wiki](https://github.com/UU-cellbiology/extractBasalBodies/wiki)**.
 
+
+![workflow](./pics/workflow.png)   
+
 ----------
 
 Developed in <a href='http://cellbiology.science.uu.nl/'>Cell Biology group</a> of Utrecht University.  
