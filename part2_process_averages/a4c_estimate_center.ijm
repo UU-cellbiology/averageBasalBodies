@@ -2,7 +2,7 @@
 // email y.katrukha@uu.nl
 // full info, check https://github.com/UU-cellbiology/extractBasalBodies
 
-nVersion = "20250405";
+nVersion = "20250822";
 
 bBatchFolder = false;
 values = getArgument();
@@ -11,10 +11,10 @@ paramSeparator = "?";
 if(values.length()>0)
 {
 	params = split(values, paramSeparator);
-	nChAlign=parseInt(params[0]);
-	nSD=parseFloat(params[1]);
-	nDiamMax=parseFloat(params[2]);
-	nDiamStep=parseFloat(params[3]);
+	nChAlign = parseInt(params[0]);
+	nSD = parseFloat(params[1]);
+	nDiamMax = parseFloat(params[2]);
+	nDiamStep = parseFloat(params[3]);
 	nScaleXY = 1.0/parseFloat(params[4]);
 	filesDir = params[5];
 	
@@ -129,8 +129,8 @@ for (nFile = 0; nFile < list.length; nFile++)
 		{
 			setResult("finCCMax", i, globCCMax[i]);
 			setResult("finDiam", i, globDiam[i]);
-			setResult("finX", i, globX[i]);
-			setResult("finY", i, globY[i]);
+			setResult("finX", i ,0.5*widthOrig +  globX[i]);
+			setResult("finY", i, 0.5*heightOrig + globY[i]);
 			setResult("finZ", i, i+1);
 
 		}
@@ -139,7 +139,8 @@ for (nFile = 0; nFile < list.length; nFile++)
 		close();
 
 		//saving results
-		saveAs("Results",  filesDir+noExtFilename+"_diam.csv");
+		saveAs("Results",  filesDir+noExtFilename+"_center_diam.csv");
+		print("Done");
 	}
 }
 setBatchMode(false);
@@ -201,7 +202,6 @@ function makeTemplateCircles(bitD, tempW, tempH, nSD,nDiamMin, nDiamMax, pW)
 		selectImage(templateID);
 		setSlice(nTempSlice);
 		nRadPx = Math.round(nDiameter/pW);
-
 		
 		//make an image of a circle
 		setLineWidth(1);
