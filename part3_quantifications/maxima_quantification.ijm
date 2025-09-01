@@ -169,7 +169,7 @@ for (nFile = 0; nFile < list.length; nFile++)
 			Plot.addText("R_(zmax"+toString(maxZInd+1)+")_"+fNameIn, 0, 0);
 			
 			
-			maxLocsR = Array.findMaxima(plotRY, dMaxToleranceR, 1);
+			maxLocsR = Array.findMaxima(plotRY, dMaxToleranceR, 0);
 			nMaxRN = maxLocsR.length;
 			//print(nMaxRN);
 			
@@ -272,6 +272,11 @@ function findLRMax(Yvals, xMax, xLR)
 	currX = xMax;
 	currY = Yvals[xMax];
 	bSearch = true;
+	if(currX == 0)
+	{
+		bSearch = false;
+	}
+	
 	while(bSearch)
 	{
 		currX--;
@@ -296,12 +301,18 @@ function findLRMax(Yvals, xMax, xLR)
 			}
 		}
 	}
+	
 	xLR[0] = currX;
 	
 	//RIGHT
 	currX = xMax;
 	currY = Yvals[xMax];
 	bSearch = true;
+	if(currX ==Yvals.length-1)
+	{
+		bSearch = false;
+	}
+
 	while(bSearch)
 	{
 		currX++;
