@@ -9,7 +9,7 @@ from [expansion microscopy](https://en.wikipedia.org/wiki/Expansion_microscopy) 
 
 The analysis workflow corresponds to the manuscript:  
 **"Microtubule organization and molecular architecture of ciliary basal bodies in multiciliated airway cells"**   
-van Grinsven et al., to be published.  
+van Grinsven et al., [preprint](https://www.biorxiv.org/content/10.1101/2025.09.04.674302v1).  
 
 For the full documentation, please refer to the **[wiki](https://github.com/UU-cellbiology/extractBasalBodies/wiki)**.
 
