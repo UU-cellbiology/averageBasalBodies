@@ -2,7 +2,7 @@
 // email y.katrukha@uu.nl
 // full info, check https://github.com/UU-cellbiology/extractBasalBodies
 
-nVersion = "20250205";
+nVersion = "20260819";
 if(nImages == 0 || roiManager("count")==0 )
 	exit("macro requires one image open and ROIs present in ROI manager");
 
@@ -75,7 +75,7 @@ origID = getImageID();
 origTitle = getTitle();
 print("Analyzing file: "+ origTitle);
 bitD = bitDepth();
-if(bitD>16)
+if(bitD > 16)
 {
 	exit("only 8- and 16-bit images are supported.");
 }
@@ -293,7 +293,7 @@ function findSlicePosition(globCCMax,globX,globY,globDiam,nCurrSlice, nCenterX, 
 	//close CC stack
 	close();
 	globX[nCurrSlice-1] = getResult("Xmax_(px)", 1);
-	globX[nCurrSlice-1] = getResult("Ymax_(px)", 1);
+	globY[nCurrSlice-1] = getResult("Ymax_(px)", 1);
 	globDiam[nCurrSlice-1] = nDiamTable[0];
 	globCCMax[nCurrSlice-1] =getResult("CC_max", 1);
 	
