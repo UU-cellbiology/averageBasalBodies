@@ -10,12 +10,12 @@ paramSeparator = "?";
 if(values.length()>0)
 {
 	params = split(values, paramSeparator);
-	nChAlign=parseInt(params[0]);
-	nSD=parseFloat(params[1]);
-	nDiamMax=parseFloat(params[2]);
-	nDiamStep=parseFloat(params[3]);
-	nScaleXY=parseFloat(params[4]);
-	nScaleZ=parseFloat(params[5]);
+	nChAlign = parseInt(params[0]);
+	nSD = parseFloat(params[1]);
+	nDiamMax = parseFloat(params[2]);
+	nDiamStep = parseFloat(params[3]);
+	nScaleXY = parseFloat(params[4]);
+	nScaleZ = parseFloat(params[5]);
 	filesDir = params[6];
 	macroDir = params[7];
     bBatchFolder = true;	
@@ -44,25 +44,27 @@ orientationMacroName ="s3b_find_orientation_CC_single.ijm";
 if(!bBatchFolder)
 {
 	filesDir = getDir("Choose data folder files...");
-	macroDir = filesDir + "code/";
+	macroDir =  getDir("Choose folderwith macros...");;
 }
-filesExtractedDir = filesDir+"s2_extracted/";
+filesExtractedDir = filesDir + "s2_extracted/";
 scaleSuffix = "";
-if(abs(nScaleXY-1.0)>0.001)
+if(abs(nScaleXY-1.0) > 0.001)
 {
 	scaleSuffix = scaleSuffix +"_XY"+toString(nScaleXY);
 }
-if(abs(nScaleZ-1.0)>0.001)
+if(abs(nScaleZ-1.0) > 0.001)
 {
 	scaleSuffix = scaleSuffix +"_Z"+toString(nScaleZ);
 }
-filesRotatedDir = filesDir+"s3_rotated"+scaleSuffix+"/";
-filesRotatedDetectionDir = filesRotatedDir+"detected/";
-logDir = filesDir+"logs/";
+filesRotatedDir = filesDir + "s3_rotated" + scaleSuffix + "/";
+filesRotatedRawDir = filesRotatedDir + "raw/";
+filesRotatedDetectionDir = filesRotatedDir + "detected/";
+logDir = filesDir + "logs/";
 
 sTimeStamp = getTimeStamp_sec();
 
 File.makeDirectory(filesRotatedDir);
+File.makeDirectory(filesRotatedRawDir);
 File.makeDirectory(filesRotatedDetectionDir);
 File.makeDirectory(logDir);
 //File.makeDirectory(filesMaskDir);
@@ -80,6 +82,7 @@ print("Scale factor Z: "+toString(nScaleZ));
 suffix = "_straight.tif";
 list = getFileList(filesExtractedDir);
 setBatchMode(true);
+nMaxZ = 0;
 for (nFile = 0; nFile < list.length; nFile++) 
 {	
 	if(endsWith(list[nFile], suffix))
@@ -88,12 +91,12 @@ for (nFile = 0; nFile < list.length; nFile++)
 		//in case you need only filename
 		noExtFilename = substring(list[nFile], 0, lengthOf(list[nFile])-lengthOf(suffix));
 		//open file
-		basecurr = filesExtractedDir+list[nFile];
+		basecurr = filesExtractedDir + list[nFile];
 		//open file
 		open(basecurr);
 		nTimeTic = getTime();
 		//get file ID
-		openImageIDsmall=getImageID();
+		openImageIDsmall = getImageID();
 		run("Scale...", "x="+toString(nScaleXY)+" y="+toString(nScaleXY)+" z="+toString(nScaleZ)+" interpolation=Bicubic average create");
 		openImageID=getImageID();
 		selectImage(openImageIDsmall);
@@ -101,25 +104,61 @@ for (nFile = 0; nFile < list.length; nFile++)
 
 
 		//run find orientation
-		runstr=toString(nChAlign)+paramSeparator+toString(nSD)+paramSeparator+toString(nDiamMax)+paramSeparator+toString(nDiamStep)+paramSeparator+"0.0"+paramSeparator+"1.0";
+		runstr = toString(nChAlign) + paramSeparator + 
+		         toString(nSD) + paramSeparator + 
+		         toString(nDiamMax) + paramSeparator + 
+		         toString(nDiamStep) + paramSeparator + 
+		         "0.0" + paramSeparator + 
+		         "1.0";
 		runMacro(macroDir + orientationMacroName, runstr);	
-		saveAs("Tiff", filesRotatedDir+noExtFilename+".tif");
+		saveAs("Tiff", filesRotatedRawDir + noExtFilename + ".tif");
+		Stack.getDimensions(width, height, channels, slices, frames);
+		nMaxZ = Math.max(nMaxZ, slices);
+		close();
 		
-		close();
 		selectWindow("rot_detected");
-		saveAs("Tiff", filesRotatedDetectionDir+noExtFilename+"_rot.tif");
+		saveAs("Tiff", filesRotatedDetectionDir + noExtFilename + "_rot.tif");
 		close();
+		
 		nTimeToc = getTime();
 		print("time per file: "+toString((nTimeToc-nTimeTic)/1000)+" s");
 		selectWindow("Log");
 		saveAs("Text", logDir+sTimeStamp+"_log_s3_find_orientation_macro.txt");
 	}
 }
+//expand along Z
+print("maximum number of slices " + toString(nMaxZ));
+list = getFileList(filesRotatedRawDir);
+suffix = ".tif";
+for (nFile = 0; nFile < list.length; nFile++) 
+{	
+	if(endsWith(list[nFile], suffix))
+	{
+		noExtFilename = substring(list[nFile], 0, lengthOf(list[nFile])-lengthOf(suffix));
+		//open file
+		basecurr = filesRotatedRawDir + list[nFile];
+		//open file
+		open(basecurr);
+		Stack.getDimensions(width, height, channels, slices, frames);
+		if(slices < nMaxZ)
+		{
+			//get file ID
+			rawID = getImageID();
+			imTitle = getTitle();
+			getVoxelSize(vW, vH, vD, vUnit);
+			newImage("zfill", "16-bit grayscale-mode", width, height, channels, nMaxZ-slices, frames);
+			run("Concatenate...", "  image1=[" + imTitle + "] image2=zfill image3=[-- None --]");
+			setVoxelSize(vW, vH, vD, vUnit);
+		}
+		saveAs("Tiff", filesRotatedDir + noExtFilename + ".tif");
+		close();
+	}
+}
 setBatchMode(false);
 print("All done");
 selectWindow("Log");
 
-saveAs("Text", logDir+sTimeStamp+"_log_s3_find_orientation_macro.txt");
+saveAs("Text", logDir + sTimeStamp + "_log_s3_find_orientation_macro.txt");
 
 function getTimeStamp_sec() 
 { 

@@ -3,7 +3,7 @@ Dialog.create("Batch folder");
 Dialog.addNumber("SD of the ring (um)",0.18);
 Dialog.addNumber("Maximum diameter (um)",2.1);
 Dialog.addNumber("Diameter step (um)",0.1);
-Dialog.addNumber("Diameter of extraction (px)", 105);
+Dialog.addNumber("Extraction diameter coeff", 3.3);
 Dialog.addNumber("Rescale XY factor",2.0);
 Dialog.addNumber("Rescale Z factor",1.0);
 Dialog.addNumber("Averaging iterations N", 4.0);
@@ -12,7 +12,7 @@ Dialog.show();
 nSD = Dialog.getNumber();
 nDiamMax = Dialog.getNumber();
 nDiamStep = Dialog.getNumber();
-nOutThickness = Dialog.getNumber();
+nMaxDiamCoeff = Dialog.getNumber();
 nScaleXY = Dialog.getNumber();
 nScaleZ = Dialog.getNumber();
 nIterN = Dialog.getNumber();
@@ -44,7 +44,7 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 		//open raw data file and
 		//get last channel
 		listFiles = getFileList(filesDir);
-		bOneFile=true;
+		bOneFile = true;
 		for (nFile = 0; nFile < listFiles.length &&bOneFile ; nFile++) 
 		{	
 			if(endsWith(listFiles[nFile], ".tif"))
@@ -70,7 +70,7 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 		if(bAllGoesWell)
 		{
 			//open ROIs
-			bOneFile=true;
+			bOneFile = true;
 			for (nFile = 0; nFile < listFiles.length &&bOneFile; nFile++) 
 			{	
 				if(endsWith(listFiles[nFile], ".zip"))
@@ -95,7 +95,11 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 		if(bAllGoesWell)
 		{
 			//step one, detection
-			runstr=toString(nChAlign)+paramSeparator+toString(nSD)+paramSeparator+toString(nDiamMax)+paramSeparator+toString(nDiamStep)+paramSeparator +filesDir;
+			runstr = toString(nChAlign) + paramSeparator + 
+			         toString(nSD) + paramSeparator + 
+			         toString(nDiamMax) + paramSeparator + 
+			         toString(nDiamStep) + paramSeparator + 
+			         filesDir;
 			runMacro(macroDir + "s1_detect_BB_BigTrace_single.ijm", runstr);
 			
 			print("\\Clear");
@@ -104,28 +108,51 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 			selectImage(origID);
 			saveAs("Tiff",origFileTIF);
 			close();
+			//step 1b, statistics
+			runstr = filesDir + paramSeparator + toString(nMaxDiamCoeff);
+			
+			sThickness = runMacro(macroDir + "s1b_statistics_BB_.ijm", runstr);
+			print("Extraction diameter (px): " + sThickness);
+			dThickness = Math.ceil(parseFloat(sThickness));
 			
 			//step two, extraction
-			runstr=toString(nOutThickness)+paramSeparator+filesDir+paramSeparator+origFileTIF;
+			runstr = toString(dThickness) + paramSeparator + 
+					 filesDir + paramSeparator + 
+					 origFileTIF;
 			runMacro(macroDir + "s2_cvs_extract_BigTrace_rois.ijm", runstr);
 			
 			//step three, scaling and rotation
 			filesRotated = filesDir + "s3_rotated"+scaleSuffix+"/";
 			filesAver = filesDir  + "s3_rotated"+scaleSuffix+"_avg/";
 			File.makeDirectory(filesAver);
-			runstr=toString(nChAlign)+paramSeparator+toString(nSD)+paramSeparator+toString(nDiamMax)+paramSeparator+toString(nDiamStep)+paramSeparator+toString(nScaleXY)+paramSeparator+toString(nScaleZ);
-			runstr=runstr + paramSeparator+filesDir+paramSeparator+macroDir+paramSeparator;
+			runstr = toString(nChAlign) + paramSeparator + 
+					 toString(nSD) + paramSeparator + 
+					 toString(nDiamMax) + paramSeparator + 
+					 toString(nDiamStep) + paramSeparator + 
+					 toString(nScaleXY) + paramSeparator + 
+					 toString(nScaleZ);
+			runstr = runstr + paramSeparator + 
+					 filesDir + paramSeparator + 
+					 macroDir + paramSeparator;
 			runMacro(macroDir + "s3_find_orientation_batch_scale.ijm", runstr);
 			
 			//step four, averaging
 			print("\\Clear");						
-			runstr = "input=[Tif files (low memory, slow)]] select=["+filesRotated+"] for=[use channel "+toString(nChAlign)+"] initial=Centered number="+toString(nIterN)+" template=Average use constrain=[by voxels] x=20 y=20 z=100.000 intermediate registered choose=["+filesAver+"]";
+			runstr = "input=[Tif files (low memory, slow)]] select=[" + filesRotated + "] for=[use channel " + 
+			          toString(nChAlign) + "] initial=Centered number="+toString(nIterN) + 
+			          " template=Average use constrain=[by voxels] x=20 y=20 z=50.000 intermediate registered choose=[" + filesAver + 
+			          "]";
 			run("Iterative Averaging", runstr);
 			selectWindow("Log");
-			saveAs("Text", filesAver+ getTimeStamp_sec()+"_log_averaging.txt");
+			saveAs("Text", filesAver + getTimeStamp_sec() + "_log_averaging.txt");
 			print("fitting diameters");
 			//step five, quantifications of diameter
-			runstr=toString(nChAlign) + paramSeparator + toString(nSD) + paramSeparator + toString(nDiamMax) + paramSeparator + toString(nDiamStep*0.5) + paramSeparator + toString(nScaleXY) + paramSeparator + toString(filesAver);
+			runstr = toString(nChAlign) + paramSeparator + 
+					 toString(nSD) + paramSeparator + 
+					 toString(nDiamMax) + paramSeparator + 
+					 toString(nDiamStep * 0.5) + paramSeparator + 
+					 toString(nScaleXY) + paramSeparator + 
+					 toString(filesAver);
 			runMacro(macroDir + "s3c_estimate_diam.ijm", runstr);
 
 			print("done.");
@@ -146,10 +173,8 @@ for (nFolder = 0; nFolder < listFolder.length; nFolder++)
 			}
 			filenameCSV = substring(finalAverTIF, 0, lengthOf(finalAverTIF)-lengthOf(".tif"))+"_diam.csv";
 			print(filenameCSV);
-			File.rename(filesAver+filenameCSV, filesAver+sFolderName+scaleSuffix+"_"+filenameCSV);		}
-
-
-		
+			File.rename(filesAver + filenameCSV, filesAver + sFolderName + scaleSuffix + "_" + filenameCSV);
+			run("Collect Garbage");}		
 	}
 }
 

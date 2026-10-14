@@ -2,7 +2,7 @@
 // email y.katrukha@uu.nl
 // full info, check https://github.com/UU-cellbiology/extractBasalBodies
 
-nVersion = "20260819";
+nVersion = "20261005";
 if(nImages == 0 || roiManager("count")==0 )
 	exit("macro requires one image open and ROIs present in ROI manager");
 
@@ -16,10 +16,10 @@ paramSeparator = "?";
 if(values.length()>0)
 {
 	params = split(values, paramSeparator);
-	nChAlign=parseInt(params[0]);
-	nSD=parseFloat(params[1]);
-	nDiamMax=parseFloat(params[2]);
-	nDiamStep=parseFloat(params[3]);
+	nChAlign = parseInt(params[0]);
+	nSD = parseFloat(params[1]);
+	nDiamMax = parseFloat(params[2]);
+	nDiamStep = parseFloat(params[3]);
 	filesDir = params[4];
 
 	bShowDetection = true;
@@ -36,16 +36,16 @@ else
 	Dialog.addCheckbox("Extract stacks? ", false);
 	Dialog.addCheckbox("Show detection (in overlay)? ", true);
 	Dialog.show();
-	nChAlign=Dialog.getNumber();
-	nSD=Dialog.getNumber();
-	nDiamMax=Dialog.getNumber();
-	nDiamStep=Dialog.getNumber();
-	bExtractStack=Dialog.getCheckbox();
-	bShowDetection=Dialog.getCheckbox();
+	nChAlign = Dialog.getNumber();
+	nSD = Dialog.getNumber();
+	nDiamMax = Dialog.getNumber();
+	nDiamStep = Dialog.getNumber();
+	bExtractStack = Dialog.getCheckbox();
+	bShowDetection = Dialog.getCheckbox();
 
 }
 
-nDiamMin =3*nSD;
+nDiamMin = 3 * nSD;
 if(!bBatchFolder)
 {
 	filesDir = getDir("Choose a folder to save output...");
@@ -61,6 +61,8 @@ filesAlignedDir = filesDir+"s1_detected/";
 File.makeDirectory(filesAlignedDir);
 logDir = filesDir+"logs/";
 File.makeDirectory(logDir);
+statDir = filesDir+"statistics/";
+File.makeDirectory(statDir);
 
 sTimeStamp = getTimeStamp_sec();
 
@@ -80,8 +82,18 @@ if(bitD > 16)
 	exit("only 8- and 16-bit images are supported.");
 }
 Stack.getDimensions(widthOrig, heightOrig, channels, slices, frames);
+//get and save voxel size
 getVoxelSize(pW, pH, pD, unit);
-//getPixelSize(unit, pW, pH);
+vxFile = statDir + "voxel_size.csv";
+if(File.exists(vxFile))
+{
+	File.delete(vxFile);
+}
+file_out = File.open(vxFile);
+print(file_out,"X,Y,Z,unit");
+
+print(file_out,toString(pW)+","+toString(pH)+","+toString(pD)+"," + unit);
+File.close(file_out);
 nSDpix = nSD/pW; 
 nShiftThreshold = nSDpix*2;
 
@@ -185,6 +197,11 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 	
 		}
 	}
+	//add extra length constrain
+	if(Math.abs(nEndSlice - nBeginSlice) < 15)
+	{
+		bFoundSpan = false;
+	}
 	if(bFoundSpan)
 	{
 		nRoiLocated++;
@@ -201,9 +218,7 @@ for(nRoiIndex = 0; nRoiIndex<nTotROIS;nRoiIndex++)
 		}
 		//saving results
 		saveAs("Results",  filesAlignedDir+sRoiName+".csv");
-		
-		
-		
+	
 		if(bExtractStack)
 		{
 			

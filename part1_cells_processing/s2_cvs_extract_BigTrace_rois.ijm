@@ -2,17 +2,17 @@
 // email y.katrukha@uu.nl
 // full info, check https://github.com/UU-cellbiology/extractBasalBodies
 
-nVersion = "20250205";
+nVersion = "20261005";
 
 bBatchFolder = false;
 values = getArgument();
 paramSeparator = "?";
 nSmoothCenterLine = 5;
 
-if(values.length()>0)
+if(values.length() > 0)
 {
 	params = split(values, paramSeparator);
-	nOutThickness=parseInt(params[0]);
+	nOutThickness = parseInt(params[0]);
 	filesDir = params[1];
 	fileExtract = params[2];
   	bBatchFolder = true;
@@ -49,7 +49,7 @@ print("Extracting BB from " +fileExtract);
 suffix = ".csv";
 list = getFileList(filesDetectedDir);
 
-roiFile =filesBTROIsDir + "BB_ROIs_btrois.csv";
+roiFile = filesBTROIsDir + "BB_ROIs_btrois.csv";
 print("exporting BigTrace ROIs to " +roiFile);
 selectWindow("Log");
 saveAs("Text", logDir+sTimeStamp+"_log_s2_extract_BB_macro.txt");
@@ -58,13 +58,13 @@ if(File.exists(roiFile))
 	File.delete(roiFile);
 }
 file_out = File.open(roiFile);
-print(file_out,"BigTrace_groups,version,0.5.2");
+print(file_out,"BigTrace_groups,version,0.9.2");
 print(file_out,"GroupsNumber,1\nBT_Group,1\nName,*undefined*");
 print(file_out,"PointSize,4\nPointColor,0,255,0,255");
 print(file_out,"LineThickness,"+toString(nOutThickness)+"\nLineColor,0,0,255,255");
 print(file_out,"RenderType,2");
 print(file_out,"End of BigTrace Groups");
-print(file_out,"BigTrace_ROIs,version,0.5.2");
+print(file_out,"BigTrace_ROIs,version,0.9.2");
 print(file_out,"ROIsNumber,"+toString(list.length));
 //print(f,"");
 
@@ -80,14 +80,14 @@ for (nFile = 0; nFile < list.length; nFile++)
 		run("Table... ", "open=["+basecurr+"]");
 		Table.rename(list[nFile], "Results");
 		
-	 	print(file_out,"BT_Roi,"+toString(nRoiCount)+"\nType,LineTrace");
-  		print(file_out,"Name,"+noExtFilename);
-  		print(file_out,"GroupInd,0");
-  		print(file_out,"TimePoint,0");
-  		print(file_out,"PointSize,4\nPointColor,0,255,0,255");
- 		print(file_out,"LineThickness,"+toString(nOutThickness)+"\nLineColor,0,0,255,255");
- 		print(file_out,"RenderType,2");
-  		print(file_out,"Vertices,2");
+	 	print(file_out, "BT_Roi,"+toString(nRoiCount)+"\nType,LineTrace");
+  		print(file_out, "Name,"+noExtFilename);
+  		print(file_out, "GroupInd,0");
+  		print(file_out, "TimePoint,0");
+  		print(file_out, "PointSize,4\nPointColor,0,255,0,255");
+ 		print(file_out, "LineThickness,"+toString(nOutThickness)+"\nLineColor,0,0,255,255");
+ 		print(file_out, "RenderType,2");
+  		print(file_out, "Vertices,2");
   		ind = 0;
   		print(file_out,toString(getResult("finX", ind))+","+toString(getResult("finY", ind))+"," +toString(getResult("finZ", ind)));
   		ind = nResults-1;
@@ -95,7 +95,7 @@ for (nFile = 0; nFile < list.length; nFile++)
   		print(file_out,"SegmentsNumber,1");
   		print(file_out,"Segment,1,Points,"+toString(ind));
   		nRoiCount++;
-  		for(ind=0;ind<nResults;ind++)
+  		for(ind = 0; ind < nResults; ind++)
   		{
   			print(file_out,toString(getResult("finX", ind))+","+toString(getResult("finY", ind))+"," +toString(getResult("finZ", ind)));
   		}
