@@ -1,6 +1,6 @@
 # averageBasalBodies  
 
-[![DOI](https://zenodo.org/badge/756863400.svg)](https://doi.org/10.5281/zenodo.16572145)   
+[![DOI](./pics/doi.zenodo.16572145.svg)](https://doi.org/10.5281/zenodo.16572145)  
 
 
 This repository contains a set of [Fiji](https://fiji.sc/) macros   
